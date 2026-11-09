@@ -323,38 +323,42 @@ function buildHydraulics(){
 // Schematic right-hand CNC pendant, mounted on an articulated support arm.
 // All dimensions are illustrative. X is machine width; Z points toward the operator.
 function buildCncScreen(){
- const sideX=L/2-280, baseX=sideX+55;
+ // Side-mounted touchscreen CNC on the RIGHT (positive-X) frame wall.
+ // The 40-mm sidewall is centred approximately at x=L/2-280.
+ const wallX=L/2-280,outerX=wallX+32;
  const armMat=new THREE.MeshStandardMaterial({color:0x566965,roughness:.45,metalness:.42});
  const panelMat=new THREE.MeshStandardMaterial({color:0x303b39,roughness:.48,metalness:.28});
- const darkMat=new THREE.MeshStandardMaterial({color:0x1c2627,roughness:.58,metalness:.16});
- const displayMat=new THREE.MeshStandardMaterial({color:0x75a6bb,roughness:.18,metalness:.06});
- const keyMat=new THREE.MeshStandardMaterial({color:0xc5d2cd,roughness:.5,metalness:.10});
- const orangeMat=new THREE.MeshStandardMaterial({color:0xe88a34,roughness:.38,metalness:.24});
- // Fixed mounting plate on outer face of the right frame.
- box(22,180,170,baseX,1560,110,'CNC_mount_plate').material=armMat;
- box(50,330,50,baseX+45,1680,110,'CNC_vertical_post').material=armMat;
- const joint1=cyl(40,52,baseX+45,1815,110,'CNC_shoulder_joint',armMat);
- joint1.rotation.z=Math.PI/2;
- // Two articulated horizontal arm segments projecting to the right, then forward.
- box(255,54,54,baseX+165,1815,110,'CNC_swing_arm_1').material=armMat;
- cyl(37,60,baseX+290,1815,110,'CNC_elbow_joint',orangeMat);
- box(58,58,395,baseX+290,1815,325,'CNC_swing_arm_2').material=armMat;
- const endJoint=cyl(32,75,baseX+290,1815,520,'CNC_panel_swivel',armMat);
- endJoint.rotation.x=Math.PI/2;
- // Control screen faces the operator (positive Z).
- const cx=baseX+290,cy=1700,cz=585;
- box(430,335,80,cx,cy,cz,'CNC_panel_body').material=panelMat;
- box(403,308,10,cx,cy,cz+45,'CNC_panel_bezel').material=darkMat;
- box(310,190,4,cx-29,cy+55,cz+52,'CNC_display').material=displayMat;
- box(302,9,5,cx-29,cy+139,cz+55,'CNC_display_title_bar').material=orangeMat;
- box(300,82,5,cx-30,cy-102,cz+53,'CNC_keypad_base').material=panelMat;
- for(let row=0;row<3;row++)for(let col=0;col<8;col++)
-  box(24,13,5,cx-159+col*36,cy-78-row*24,cz+58,'CNC_key_'+row+'_'+col).material=keyMat;
- // Manual pulse wheel and emergency-stop button on the right of the panel.
- const wheel=cyl(31,14,cx+166,cy-91,cz+56,'CNC_handwheel',keyMat);
- wheel.rotation.x=Math.PI/2;
- const eStop=cyl(22,18,cx+167,cy+75,cz+59,'CNC_emergency_stop',orangeMat);
- eStop.rotation.x=Math.PI/2;
+ const glassMat=new THREE.MeshStandardMaterial({color:0x284f60,roughness:.17,metalness:.08});
+ const edgeMat=new THREE.MeshStandardMaterial({color:0x16282a,roughness:.38,metalness:.16});
+ const accentMat=new THREE.MeshStandardMaterial({color:0xe88a34,roughness:.4,metalness:.22});
+ const uiMat=new THREE.MeshStandardMaterial({color:0x75a8ba,roughness:.3,metalness:.02});
+ // Base is bolted directly onto the outer SIDE face of the vertical frame.
+ box(24,225,185,outerX,1570,90,'CNC_sidewall_mount_plate').material=armMat;
+ for(const dy of [-75,75])for(const dz of [-55,55]){
+  const bolt=cyl(9,8,outerX+14,1570+dy,90+dz,'CNC_mount_bolt_'+dy+'_'+dz,edgeMat);
+  bolt.rotation.z=Math.PI/2;
+ }
+ // Horizontal articulated arm anchored in the sidewall and extending right.
+ box(55,55,90,outerX+52,1650,90,'CNC_sidewall_shoulder').material=armMat;
+ const shoulder=cyl(37,60,outerX+80,1650,90,'CNC_sidewall_pivot',accentMat);
+ shoulder.rotation.z=Math.PI/2;
+ box(255,48,48,outerX+190,1650,90,'CNC_swing_arm_1').material=armMat;
+ cyl(30,56,outerX+316,1650,90,'CNC_arm_elbow',armMat);
+ // Forward swing arm holds the touchscreen facing the machine operator.
+ box(52,52,390,outerX+316,1650,296,'CNC_swing_arm_2').material=armMat;
+ const head=cyl(31,62,outerX+316,1650,505,'CNC_touchscreen_swivel',armMat);
+ head.rotation.x=Math.PI/2;
+ const cx=outerX+316,cy=1680,cz=580;
+ // Entire panel front is a touch-sensitive glass surface: no keyboard,
+ // jog wheel, physical menu buttons or emergency-stop button on the screen.
+ box(465,335,54,cx,cy,cz,'CNC_touchscreen_housing').material=panelMat;
+ box(444,314,8,cx,cy,cz+31,'CNC_touchscreen_black_bezel').material=edgeMat;
+ box(425,292,3,cx,cy,cz+37,'CNC_touchscreen_glass').material=glassMat;
+ // Display-only GUI cues are part of the touch surface, not physical keys.
+ box(409,24,2,cx,cy+120,cz+40,'CNC_touch_header').material=accentMat;
+ box(210,6,2,cx-90,cy+83,cz+40,'CNC_touch_status_line').material=uiMat;
+ for(let i=0;i<4;i++)
+  box(76,42,2,cx-135+i*91,cy-95,cz+40,'CNC_touchscreen_virtual_button_'+i).material=uiMat;
 }
 
 // Rear gauge: world coordinates X = bending length, Y = vertical, Z = machine depth.
