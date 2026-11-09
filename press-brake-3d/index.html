@@ -48,7 +48,7 @@ const plateMat=new THREE.MeshStandardMaterial({color:0xb6bcb9,roughness:.47,meta
 const lineMat=new THREE.LineBasicMaterial({color:0x485a51,transparent:true,opacity:.34});
 let stroke=0,y1Stroke=0,y2Stroke=0,moving=[],rods=[],ramAssembly=null,running=false,animationTime=0;
 let crownC=0,crownSegments=[],crownUpper=[],crownSupported=[];
-let bendAngle=0,bendBusy=false,bendToken=0,sheetGroup=null,sheetBack=null,sheetFlange=null,sheetPivot=null,pedalGroup=null,pedalPlate=null,pedalClickable=[];
+let bendAngle=0,bendBusy=false,bendToken=0,sheetGroup=null,sheetBack=null,sheetBackPivot=null,sheetFlange=null,sheetPivot=null,pedalGroup=null,pedalPlate=null,pedalClickable=[];
 // Common bending centreline of the lower bed and upper ram lip, in scene Z coordinates.
 const X_DATUM_Z=177.5;
 const GAUGE_FINGER_TIP_Z=-590+330/2;
@@ -151,7 +151,7 @@ function buildMultiVDie(){
  }
 }
 
-function build(){if(group){scene.remove(group);group.traverse(o=>{if(o.geometry)o.geometry.dispose()})}group=new THREE.Group();scene.add(group);parts=[];moving=[];rods=[];ramAssembly=null;crownSegments=[];crownUpper=[];crownSupported=[];sheetGroup=null;sheetBack=null;sheetFlange=null;sheetPivot=null;pedalGroup=null;pedalPlate=null;pedalClickable=[];gaugeStops=[];gaugeFixed=[];
+function build(){if(group){scene.remove(group);group.traverse(o=>{if(o.geometry)o.geometry.dispose()})}group=new THREE.Group();scene.add(group);parts=[];moving=[];rods=[];ramAssembly=null;crownSegments=[];crownUpper=[];crownSupported=[];sheetGroup=null;sheetBack=null;sheetBackPivot=null;sheetFlange=null;sheetPivot=null;pedalGroup=null;pedalPlate=null;pedalClickable=[];gaugeStops=[];gaugeFixed=[];
 for(const sign of [-1,1]){const x=sign*(L/2-280);let g=extrudeShape(sideShape(),40);g.rotateY(Math.PI/2);add(g,x-20,0,0,'Sidewall_'+sign);
 box(260,50,1800,x,25,-617.5,'Foot_'+sign);
 const s=new THREE.Shape();s.moveTo(-110,0);s.lineTo(110,0);s.lineTo(110,800);s.lineTo(-110,800);s.closePath();for(const hx of [-65,65])for(const hy of [65,225,575,735]){const hole=new THREE.Path();hole.absarc(hx,hy,20,0,Math.PI*2,true);s.holes.push(hole)}
@@ -489,8 +489,9 @@ function buildBendingSimulation(){
  const charcoal=new THREE.MeshStandardMaterial({color:0x485753,roughness:.55,metalness:.25});
  const orange=new THREE.MeshStandardMaterial({color:0xf18a33,roughness:.42,metalness:.18});
  sheetGroup=new THREE.Group();group.add(sheetGroup);
+ sheetBackPivot=new THREE.Group();sheetGroup.add(sheetBackPivot);
  sheetBack=box(1500,2,1,0,0,0,'Sim_sheet_back_1500x2');
- group.remove(sheetBack);sheetGroup.add(sheetBack);sheetBack.material=steel;
+ group.remove(sheetBack);sheetBackPivot.add(sheetBack);sheetBack.material=steel;
  sheetPivot=new THREE.Group();sheetGroup.add(sheetPivot);
  sheetFlange=box(1500,2,1,0,0,0,'Sim_sheet_flange_1500x2');
  group.remove(sheetFlange);sheetPivot.add(sheetFlange);sheetFlange.material=steel;
@@ -514,17 +515,22 @@ function updateBendingSimulation(){
  const sheetX=(gaugeZ1+gaugeZ2)/2;
  const y=1103+crownC*crownWeight(sheetX);
  const bendZ=X_DATUM_Z;
+ // Both free edges travel toward the bend line in the depth (Z) direction.
+ // A finished 90-degree inside angle is two symmetric 45-degree rotations.
+ const halfBend=bendAngle*Math.PI/360;
+ sheetBackPivot.position.set(sheetX,y,bendZ);
+ sheetBackPivot.rotation.x=halfBend;
  sheetBack.visible=backDepth>0.5;
  sheetBack.scale.z=Math.max(0.001,backDepth);
- sheetBack.position.set(sheetX,y,bendZ-backDepth/2);
+ sheetBack.position.set(0,0,-backDepth/2);
  sheetPivot.position.set(sheetX,y,bendZ);
- sheetPivot.rotation.x=-bendAngle*Math.PI/180;
+ sheetPivot.rotation.x=-halfBend;
  sheetFlange.visible=frontDepth>0.5;
  sheetFlange.scale.z=Math.max(0.001,frontDepth);
  sheetFlange.position.set(0,0,frontDepth/2);
  if(pedalPlate)pedalPlate.rotation.x=bendBusy?-.16:0;
  const out=document.getElementById('bendInfo');
- if(out)out.textContent='Лист: 1500 × 500 × 2 мм; X='+gaugeX+' мм; угол='+bendAngle.toFixed(0)+'°. Задняя кромка: Z='+(bendZ-backDepth).toFixed(1)+' мм. '+(bendBusy?'Выполняется цикл гибки':'Готово к эмуляции');
+ if(out)out.textContent='Лист 1500 × 500 × 2 мм; X='+gaugeX+' мм; внутренний угол='+(180-bendAngle).toFixed(0)+'°; гиб от плоскости='+bendAngle.toFixed(0)+'°. '+(bendBusy?'Плавная гибка: оба края сходятся к линии гиба':bendAngle>=90?'Деталь согнута на 90° и сохраняет форму':'Готово к гибке');
 }
 function cancelBending(){
  bendToken++;bendBusy=false;bendAngle=0;
@@ -533,6 +539,7 @@ function cancelBending(){
 }
 function bendCycle(){
  if(!document.getElementById('bendSim').checked||bendBusy)return;
+ if(bendAngle>=90){document.getElementById('bendInfo').textContent='Деталь уже согнута на 90°. Для следующего цикла нажмите «Сброс детали».';return;}
  if(gaugeX<45||gaugeX>480){
   document.getElementById('bendInfo').textContent='Для гибки выставьте X в диапазоне 45–480 мм: нужен участок листа по обе стороны линии гиба и зазор с матрицей.';
   return;
@@ -544,21 +551,36 @@ function bendCycle(){
  stop();
  bendBusy=true;bendAngle=0;document.getElementById('syncY').checked=true;
  const token=++bendToken,oldY=(y1Stroke+y2Stroke)/2;
- // Stop above the schematic V22 groove floor. End position: punch tip 1095+C mm.
+ // Nominal punch penetration for the demonstration; does not calculate force.
+ // During the forming stage the ram descends while BOTH halves approach the V centre.
  const pressY=180-Math.max(0,crownC);
- const start=performance.now(),duration=2600;
+ const start=performance.now(),duration=3400;
+ const ease=v=>{const t=Math.max(0,Math.min(1,v));return t*t*(3-2*t);};
  function frame(now){
   if(token!==bendToken)return;
   const t=Math.max(0,Math.min(1,(now-start)/duration));
-  const smooth=v=>v*v*(3-2*v);
-  let y,angle=0;
-  if(t<.38){y=oldY+(pressY-oldY)*smooth(t/.38);}
-  else if(t<.77){y=pressY;angle=90*smooth((t-.38)/.39);}
-  else {y=pressY*(1-smooth((t-.77)/.23));angle=90;}
-  setYStrokes(y,y);bendAngle=angle;
-  updateBendingSimulation();render();
+  let y,angle;
+  if(t<.22){
+   const p=ease(t/.22);y=oldY+(165-oldY)*p;angle=0;
+  }else if(t<.76){
+   const p=ease((t-.22)/.54);
+   y=165+(pressY-165)*p;
+   angle=90*p;
+  }else{
+   const p=ease((t-.76)/.24);
+   y=pressY*(1-p);
+   angle=90;
+  }
+  bendAngle=angle;
+  setYStrokes(y,y);
   if(t<1)requestAnimationFrame(frame);
-  else {bendAngle=90;bendBusy=false;setStroke(0);updateBendingSimulation();render();}
+  else{
+   bendAngle=90;
+   bendBusy=false;
+   setStroke(0);
+   updateBendingSimulation();
+   render();
+  }
  }
  requestAnimationFrame(frame);
 }
