@@ -296,9 +296,9 @@ function buildBackgauge(){
  const xGuideCenterZ=-447.5,xGuideLength=800; // X=0..500; each 115 mm block fully supported
  // X=0 datum: lower working edge of the finger aligned with the COMMON
  // centreline of upper and lower working plates (Z=177.5 mm).
- // R=0 is bottom position, rising from 0 to 150 mm.
+ // R=0 is bottom position, rising from 0 to 250 mm.
  // Translate the COMPLETE backgauge mechanism (fixed X rails included) together,
- // preserving the original rail/carriage alignment and 150 mm R travel.
+ // preserving the rail/carriage alignment and 250 mm R travel.
  gaugeBase=new THREE.Group();gaugeBase.position.y=-272.5;group.add(gaugeBase);
  // Static machine X rails stay mounted to both sidewalls.
  for(const sign of [-1,1]){
@@ -324,10 +324,10 @@ function buildBackgauge(){
   // A rigid transverse bracket connects each inner R support to its X carriage.
   const rx=sx-sign*90;
   gaugeBox(gaugeTravel,180,95,175,sx-sign*45,930,-800,'Gauge_X_to_R_inner_bracket_'+sign,gaugeMetal);
-  gaugeBox(gaugeTravel,125,390,125,rx,960,-810,'Gauge_R_fixed_support_'+sign,gaugeMetal);
+  gaugeBox(gaugeTravel,125,550,125,rx,1030,-810,'Gauge_R_fixed_support_'+sign,gaugeMetal);
   for(const dx of [-38,38])
-   gaugeBox(gaugeTravel,22,390,28,rx+dx,965,-740,'Gauge_R_fixed_rail_'+sign+'_'+dx,rodMetal);
-  const screw=cyl(13,340,rx,950,-710,'Gauge_R_leadscrew_'+sign,rodMetal);
+   gaugeBox(gaugeTravel,22,550,28,rx+dx,1030,-740,'Gauge_R_fixed_rail_'+sign+'_'+dx,rodMetal);
+  const screw=cyl(13,510,rx,1030,-710,'Gauge_R_leadscrew_'+sign,rodMetal);
   group.remove(screw);gaugeTravel.add(screw);
   gaugeBox(gaugeTravel,86,70,94,rx,790,-710,'Gauge_R_motor_'+sign,dark);
  }
@@ -357,14 +357,14 @@ function gaugeBounds(length){return Math.max(100,Math.min(1200,(length-620)/2-14
 function updateBackgauge(){
  const lim=gaugeBounds(L);
  gaugeX=Math.max(0,Math.min(500,gaugeX));
- gaugeR=Math.max(0,Math.min(150,gaugeR));
+ gaugeR=Math.max(0,Math.min(250,gaugeR));
  gaugeZ1=Math.max(-lim,Math.min(-80,gaugeZ1));
  gaugeZ2=Math.max(80,Math.min(lim,gaugeZ2));
  if(gaugeTravel)gaugeTravel.position.z=(X_DATUM_Z-GAUGE_FINGER_TIP_Z)-gaugeX;
  if(gaugeLift)gaugeLift.position.y=gaugeR;
  if(gaugeStops[0])gaugeStops[0].position.x=gaugeZ1;
  if(gaugeStops[1])gaugeStops[1].position.x=gaugeZ2;
- const sliders={axisX:[gaugeX,0,500],axisR:[gaugeR,0,150],axisZ1:[gaugeZ1,-lim,-80],axisZ2:[gaugeZ2,80,lim]};
+ const sliders={axisX:[gaugeX,0,500],axisR:[gaugeR,0,250],axisZ1:[gaugeZ1,-lim,-80],axisZ2:[gaugeZ2,80,lim]};
  for(const [id,[v,min,max]] of Object.entries(sliders)){
   const el=document.getElementById(id);if(!el)continue;
   el.min=min;el.max=max;el.value=v;
