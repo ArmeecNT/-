@@ -50,7 +50,7 @@ let stroke=0,moving=[],rods=[],running=false,animationTime=0;
 // Common bending centreline of the lower bed and upper ram lip, in scene Z coordinates.
 const X_DATUM_Z=177.5;
 const GAUGE_FINGER_TIP_Z=-590+330/2;
-let gaugeX=250,gaugeR=0,gaugeZ1=-600,gaugeZ2=600,gaugeBase,gaugeTravel,gaugeLift,gaugeStops=[],gaugeFixed=[];
+let gaugeX=250,gaugeR=50,gaugeZ1=-600,gaugeZ2=600,gaugeBase,gaugeTravel,gaugeLift,gaugeStops=[],gaugeFixed=[];
 let group,parts=[],L=3200,yaw=2.95,pitch=.28,zoom=1,panX=0,panY=0;
 const floor=new THREE.GridHelper(8000,40,0xc2cec6,0xdce4de);floor.position.y=-4;scene.add(floor);
 function add(geo,x,y,z,name,material=mat){const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.name=name;group.add(m);parts.push(m);const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo,22),lineMat);e.visible=document.getElementById('edges').checked;m.add(e);return m}
@@ -296,7 +296,7 @@ function buildBackgauge(){
  const xGuideCenterZ=-447.5,xGuideLength=800; // X=0..500; each 115 mm block fully supported
  // X=0 datum: lower working edge of the finger aligned with the COMMON
  // centreline of upper and lower working plates (Z=177.5 mm).
- // R=0 is bottom position, rising from 0 to 250 mm.
+ // R lower travel limit (НМТ) is 50 mm; upper limit is 250 mm.
  // Translate the COMPLETE backgauge mechanism (fixed X rails included) together,
  // preserving the rail/carriage alignment and 250 mm R travel.
  gaugeBase=new THREE.Group();gaugeBase.position.y=-272.5;group.add(gaugeBase);
@@ -359,14 +359,14 @@ function gaugeBounds(length){return Math.max(100,Math.min(1200,(length-620)/2-14
 function updateBackgauge(){
  const lim=gaugeBounds(L);
  gaugeX=Math.max(0,Math.min(500,gaugeX));
- gaugeR=Math.max(0,Math.min(250,gaugeR));
+ gaugeR=Math.max(50,Math.min(250,gaugeR));
  gaugeZ1=Math.max(-lim,Math.min(-80,gaugeZ1));
  gaugeZ2=Math.max(80,Math.min(lim,gaugeZ2));
  if(gaugeTravel)gaugeTravel.position.z=(X_DATUM_Z-GAUGE_FINGER_TIP_Z)-gaugeX;
  if(gaugeLift)gaugeLift.position.y=gaugeR;
  if(gaugeStops[0])gaugeStops[0].position.x=gaugeZ1;
  if(gaugeStops[1])gaugeStops[1].position.x=gaugeZ2;
- const sliders={axisX:[gaugeX,0,500],axisR:[gaugeR,0,250],axisZ1:[gaugeZ1,-lim,-80],axisZ2:[gaugeZ2,80,lim]};
+ const sliders={axisX:[gaugeX,0,500],axisR:[gaugeR,50,250],axisZ1:[gaugeZ1,-lim,-80],axisZ2:[gaugeZ2,80,lim]};
  for(const [id,[v,min,max]] of Object.entries(sliders)){
   const el=document.getElementById(id);if(!el)continue;
   el.min=min;el.max=max;el.value=v;
@@ -385,7 +385,7 @@ for(const [id,key] of [['axisX','x'],['axisR','r'],['axisZ1','z1'],['axisZ2','z2
  };
 }
 document.getElementById('gaugeHome').onclick=()=>{
- gaugeX=250;gaugeR=0;
+ gaugeX=250;gaugeR=50;
  const pos=Math.min(600,gaugeBounds(L));
  gaugeZ1=-pos;gaugeZ2=pos;updateBackgauge();
 };
