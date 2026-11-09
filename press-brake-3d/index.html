@@ -434,9 +434,9 @@ translate([0,gaugeX-${X_DATUM_Z-GAUGE_FINGER_TIP_Z},0]){
 }
 function scadText(){return `// Schematic frame, millimeters. Not a fabrication drawing.\nL = ${L}; // [1600,2000,2500,3200]\nstroke = ${stroke.toFixed(3)}; // [0:200]\n$fn=64;\nmodule box(s,p){translate(p)cube(s,center=true);}\nmodule side(){rotate([90,0,90])linear_extrude(40,center=true)difference(){polygon([[-72.5,0],[1517.5,0],[1517.5,2950],[0,2950],[0,1000],[-72.5,1000]]);translate([0,1350])scale([172.5,350])circle(1);}}\nfor(sign=[-1,1]){x=sign*(L/2-280);translate([x,0,0])side();box([260,1800,50],[x,617.5,25]);translate([x,-20,2355])difference(){cube([220,40,800],center=true);for(dx=[-65,65],dz=[-335,-175,175,335])translate([dx,0,dz])rotate([90,0,0])cylinder(h=60,r=20,center=true);}for(z=[2075,2405])box([220,420,25],[x,210,z]);for(dx=[-75,75])translate([x+dx,600,0])rotate([90,0,90])linear_extrude(20,center=true)polygon([[300,50],[-200,50],[60,420]]);}\nbox([L,210,1000],[0,-177.5,500]);\nbox([L-600,40,550],[0,170,2455]);box([L-600,650,40],[0,475,2175]);box([L-600,45,180],[0,1120,150]);\nfor(sign=[-1,1]){x=sign*(L/2-280);difference(){box([260,260,800],[x,-170,2355]);for(dx=[-65,65],z=[2020,2180,2530,2690])translate([x+dx,-39,z])rotate([90,0,0])cylinder(h=21,r=20);}for(dx=[-65,65],z=[2020,2180,2530,2690]){translate([x+dx,-27,z])rotate([90,0,0])cylinder(h=66,r=18,center=true);translate([x+dx,3,z])rotate([90,0,0])difference(){cylinder(h=6,r=35,center=true);cylinder(h=8,r=19,center=true);}translate([x+dx,17.5,z])rotate([90,0,0])cylinder(h=23,r=30,center=true,$fn=6);}translate([x,-170,1895])cylinder(h=60,r=115);translate([x,-170,1887])cylinder(h=8,r=94);translate([x,-170,1875-stroke])cylinder(h=20+stroke,r=90);for(i=[0:11])translate([x+105*cos(i*30),-170-105*sin(i*30),1883])cylinder(h=12,r=7);for(z=[2065,2635])translate([x+sign*133,-170,z])rotate([0,90,0])cylinder(h=6,r=18,center=true);}\na=L/2-480;\nunion(){translate([0,-150,1425-stroke])rotate([90,0,0])linear_extrude(40)polygon(concat([[-L/2,100],[L/2,100],[L/2,450],[a+30,450]],[for(i=[1:32])let(t=i/32)[a+30*(1-t)*(1-t),450+30*t*t]],[[a,900],[-a,900],[-a,480]],[for(i=[1:32])let(t=i/32)[-a-30*t*t,450+30*(1-t)*(1-t)]],[[-L/2,450]]));box([L,55,100],[0,-177.5,1475-stroke]);}\n// AMADA/PROMECAM style sectional punch holders, schematic.\nnh=ceil(L/200); hp=L/nh;\nfor(i=[0:nh-1]){hx=-L/2+(i+0.5)*hp;hw=hp-10;\nbox([hw,35,74],[hx,-194,1388-stroke]);\nbox([hw-7,18,46],[hx,-220.5,1381-stroke]);\nfor(dx=[-hw*0.27,hw*0.27]) translate([hx+dx,-234,1380-stroke]) rotate([90,0,0]) cylinder(h=8,r=8,center=true);\n}\n\n`}
 function dieHolderScad(){
- let out='\\n// Continuous 97 x 27 die-holder, 60 mm centred recess, 12 mm base\\n';
+ let out='\n// Continuous 97 x 27 die-holder, 60 mm centred recess, 12 mm base\n';
  const outBox=(w,d,h,y,z)=>{
-  out+='translate([0,'+(-z).toFixed(3)+','+y.toFixed(3)+']) cube(['+w.toFixed(3)+','+d.toFixed(3)+','+h.toFixed(3)+'],center=true);\\n';
+  out+='translate([0,'+(-z).toFixed(3)+','+y.toFixed(3)+']) cube(['+w.toFixed(3)+','+d.toFixed(3)+','+h.toFixed(3)+'],center=true);\n';
  };
  outBox(L,97,12,1006,177.5);
  outBox(L,18.5,15,1019.5,177.5-39.25);
@@ -444,7 +444,7 @@ function dieHolderScad(){
  const n=Math.max(2,Math.ceil(L/400));
  for(let j=0;j<n;j++){
   const x=-L/2+(j+.5)*L/n;
-  out+='translate(['+x.toFixed(3)+',-207.5,1020]) rotate([90,0,0]) cylinder(h=18,r=5,center=true);\\n';
+  out+='translate(['+x.toFixed(3)+',-207.5,1020]) rotate([90,0,0]) cylinder(h=18,r=5,center=true);\n';
  }
  return out;
 }
