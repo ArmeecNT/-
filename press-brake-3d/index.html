@@ -324,8 +324,7 @@ function buildBackgauge(){
   // A rigid transverse bracket connects each inner R support to its X carriage.
   const rx=sx-sign*90;
   gaugeBox(gaugeTravel,180,95,175,sx-sign*45,930,-800,'Gauge_X_to_R_inner_bracket_'+sign,gaugeMetal);
-  // The outer side supports and guide covers rise together with the R beam.
-  // Keep these in gaugeLift so they never remain protruding at R=250.
+  // The R lift carries compact side supports; their upper faces align with the beam.
 
   const screw=cyl(13,510,rx,1030,-710,'Gauge_R_leadscrew_'+sign,rodMetal);
   group.remove(screw);gaugeTravel.add(screw);
@@ -335,9 +334,9 @@ function buildBackgauge(){
  gaugeLift=new THREE.Group();gaugeTravel.add(gaugeLift);
  for(const sign of [-1,1]){
   const sx=sign*supportX,rx=sx-sign*90;
-  gaugeBox(gaugeLift,125,550,125,rx,1030,-810,'Gauge_R_fixed_support_'+sign,gaugeMetal);
+  gaugeBox(gaugeLift,125,275,125,rx,1035,-810,'Gauge_R_fixed_support_'+sign,gaugeMetal);
   for(const dx of [-38,38])
-   gaugeBox(gaugeLift,22,550,28,rx+dx,1030,-740,'Gauge_R_fixed_rail_'+sign+'_'+dx,rodMetal);
+   gaugeBox(gaugeLift,22,275,28,rx+dx,1035,-740,'Gauge_R_fixed_rail_'+sign+'_'+dx,rodMetal);
   gaugeBox(gaugeLift,96,275,110,rx,1035,-800,'Gauge_R_moving_side_'+sign,gaugeMetal);
   for(const dx of [-38,38])
    for(const h of [875,965])
