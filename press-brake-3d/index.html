@@ -1,6 +1,6 @@
 <!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TOPSTANKI • Станина 3D</title><style>
 *{box-sizing:border-box}body{margin:0;background:#edf1f0;color:#172c26;font:14px system-ui,Segoe UI,sans-serif}header{height:72px;background:#123c30;color:white;display:flex;align-items:center;justify-content:space-between;padding:0 26px}h1{font-size:19px;margin:0}header small{color:#abc7bc}b.logo{letter-spacing:2px;color:#ff973d}main{display:grid;grid-template-columns:290px 1fr;height:calc(100vh - 72px);height:calc(100dvh - 72px)}aside{background:#fff;padding:25px 22px;overflow:auto;border-right:1px solid #dce4df}h2{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 14px;color:#6c8077}.sizes{display:grid;grid-template-columns:1fr 1fr;gap:8px}button{font:inherit;border:1px solid #d1ddd6;border-radius:8px;background:white;color:#153f31;padding:11px;cursor:pointer}button:hover{background:#edf5f0}button.active{background:#176749;color:white;border-color:#176749}section{margin-bottom:25px}dl{display:grid;grid-template-columns:1fr auto;gap:12px;font-size:13px}dt{color:#687e73}dd{margin:0;font-weight:600}.views{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wide{width:100%;margin-top:8px}.export{background:#f18a33;color:#172d24;border:0;font-weight:650}label{display:block;margin:12px 0}p.note{font-size:12px;line-height:1.6;color:#738078}.stage{position:relative;min-width:0;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none}.badge{position:absolute;top:20px;left:24px;background:#ffffffdc;border:1px solid #dbe3de;padding:12px 16px;border-radius:10px;pointer-events:none}.badge strong{font-size:22px}.help{position:absolute;bottom:18px;left:24px;color:#567065;font-size:12px;pointer-events:none}#error{display:none;position:absolute;inset:25%;background:white;padding:25px;color:#a32b15}@media(max-width:700px){main{grid-template-columns:210px 1fr}aside{padding:18px 12px}header{padding:0 15px}h1{font-size:15px}.badge{left:12px;top:12px}.help{left:12px;max-width:200px}}
-.axis-control input[type=range]{width:100%;accent-color:#176749}.axis-control output{float:right;font-weight:700;color:#176749}.axis-control{margin:9px 0 14px}.axis-info{font-size:12px;color:#60766a;line-height:1.5}.axes-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.axis-key{font-weight:700}.axis-key.x{color:#2277d5}.axis-key.r{color:#bb493c}.axis-key.z{color:#268347}</style><header><div><b class="logo">TOPSTANKI</b><h1>Станина • траверса • гидравлика</h1></div><small>3D / v4.0 XRZ</small></header><main><aside><section><h2>Рабочая длина, мм</h2><div class="sizes" id="sizes"></div></section><section><h2>Положение плиты</h2><label for="stroke">Ход вниз: <b id="strokeValue">0 мм</b></label><input id="stroke" type="range" min="0" max="200" step="1" value="0" style="width:100%;accent-color:#176749"><div class="views"><button id="up">ВМТ · 425 мм</button><button id="down">НМТ · 225 мм</button></div><button class="wide" id="animate">▶ Показать ход</button><dl><dt>Зазор над столом</dt><dd id="clearance">425 мм</dd><dt>Полный ход</dt><dd>200 мм</dd><dt>Толщина плиты</dt><dd>40 мм</dd><dt>Нижний участок</dt><dd>55 × 100 мм</dd></dl><p class="note">Зазор от нижней кромки подвижной плиты до верха стола, без инструмента.</p></section><section id="gaugePanel"><h2>Задний упор · оси X / R / Z</h2><p class="axis-info">X — вся балка вперёд/назад; R — балка вверх/вниз; Z1 и Z2 — независимые упорные пальцы влево/вправо.</p><div class="axis-control"><label for="axisX"><span class="axis-key x">X · балка</span><output id="axisXValue">250 мм</output></label><input id="axisX" type="range" min="0" max="500" value="250" step="1"></div><div class="axis-control"><label for="axisR"><span class="axis-key r">R · высота</span><output id="axisRValue">75 мм</output></label><input id="axisR" type="range" min="0" max="150" value="75" step="1"></div><div class="axis-control"><label for="axisZ1"><span class="axis-key z">Z1 · левый упор</span><output id="axisZ1Value">−600 мм</output></label><input id="axisZ1" type="range" min="-600" max="-80" value="-600" step="1"></div><div class="axis-control"><label for="axisZ2"><span class="axis-key z">Z2 · правый упор</span><output id="axisZ2Value">600 мм</output></label><input id="axisZ2" type="range" min="80" max="600" value="600" step="1"></div><div class="axes-actions"><button id="gaugeHome">Исходное положение</button><button id="gaugeView">Вид на упоры</button></div><p class="axis-info">Движения в миллиметрах. Геометрия заднего упора схематичная; размеры механизмов требуют проверки.</p></section><section><h2>Гидравлика</h2><p class="note" id="hydroNote"></p></section><section><h2>Геометрия</h2><dl><dt>Рабочая длина</dt><dd id="lengthValue">3200 мм</dd><dt>Просвет между стенками</dt><dd id="gapValue">2600 мм</dd><dt>Отступы от краёв</dt><dd>300 + 300 мм</dd><dt>Высота</dt><dd>2950 мм</dd><dt>Глубина основания</dt><dd>2000 мм</dd><dt>Ширина стола</dt><dd>210 мм</dd><dt>Выступ низа боковин</dt><dd>72,5 мм</dd><dt>Боковины</dt><dd>40 мм</dd><dt>Глубина зева</dt><dd>350 мм</dd><dt>Смещение балки</dt><dd>150 мм</dd><dt>Болтов / цилиндр</dt><dd>8 · всего 16</dd><dt>Рёбер / плита</dt><dd>2</dd></dl></section><section><h2>Вид</h2><div class="views"><button data-view="iso">Общий</button><button data-view="front">Спереди</button><button data-view="side">Сбоку</button><button data-view="rear">Сзади</button></div><button class="wide" data-view="top">Сверху</button><button class="wide" id="boltsView">Крепление цилиндра · крупно</button><input id="edges" type="checkbox" hidden><p class="note">Совместимый режим 3D · без WebGL</p><label><input id="grid" type="checkbox" checked> Сетка пола</label><button class="wide" id="fit">Вписать в экран</button></section><button class="wide export" id="obj">Скачать модель OBJ</button><button class="wide" id="scad">Скачать модель OpenSCAD</button><p class="note">Вращение — левая кнопка мыши.<br>Перемещение — правая кнопка.<br>Масштаб — колесо; на телефоне — два пальца.</p><p class="note">Схематичная модель выбранного варианта. Недостающие размеры деталей приняты для визуализации. Не является рабочим чертежом или расчётом на 160 тс. Глубина основания — от переднего до заднего края опор. Зев — от оси инструмента до задней границы выреза.</p></aside><div class="stage" id="stage"><canvas id="c"></canvas><div class="badge"><small>СБОРКА / БЕЗ ИНСТРУМЕНТА</small><br><strong id="badge">3200 мм</strong></div><div class="help">Выберите длину • вращайте модель • скачайте геометрию</div><div id="error"></div><noscript><div style="position:absolute;inset:25%;background:white;padding:24px">Для интерактивной модели скачайте этот HTML-файл и откройте его в Chrome, Edge или Яндекс Браузере с включённым JavaScript.</div></noscript></div></main><script>console.warn('Scripts "build/three.js" and "build/three.min.js" are deprecated with r150+, and will be removed with r160. Please use ES Modules or alternatives: https://threejs.org/docs/index.html#manual/en/introduction/Installation'),
+.axis-control input[type=range]{width:100%;accent-color:#176749}.axis-control output{float:right;font-weight:700;color:#176749}.axis-control{margin:9px 0 14px}.axis-info{font-size:12px;color:#60766a;line-height:1.5}.axes-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.axis-key{font-weight:700}.axis-key.x{color:#2277d5}.axis-key.r{color:#bb493c}.axis-key.z{color:#268347}</style><header><div><b class="logo">TOPSTANKI</b><h1>Станина • траверса • гидравлика</h1></div><small>3D / v4.1 XRZ</small></header><main><aside><section><h2>Рабочая длина, мм</h2><div class="sizes" id="sizes"></div></section><section><h2>Положение плиты</h2><label for="stroke">Ход вниз: <b id="strokeValue">0 мм</b></label><input id="stroke" type="range" min="0" max="200" step="1" value="0" style="width:100%;accent-color:#176749"><div class="views"><button id="up">ВМТ · 425 мм</button><button id="down">НМТ · 225 мм</button></div><button class="wide" id="animate">▶ Показать ход</button><dl><dt>Зазор над столом</dt><dd id="clearance">425 мм</dd><dt>Полный ход</dt><dd>200 мм</dd><dt>Толщина плиты</dt><dd>40 мм</dd><dt>Нижний участок</dt><dd>55 × 100 мм</dd></dl><p class="note">Зазор от нижней кромки подвижной плиты до верха стола, без инструмента.</p></section><section id="gaugePanel"><h2>Задний упор · оси X / R / Z</h2><p class="axis-info">X — вся балка вперёд/назад; R — балка вверх/вниз; Z1 и Z2 — независимые упорные пальцы влево/вправо.</p><div class="axis-control"><label for="axisX"><span class="axis-key x">X · балка</span><output id="axisXValue">250 мм</output></label><input id="axisX" type="range" min="0" max="500" value="250" step="1"></div><div class="axis-control"><label for="axisR"><span class="axis-key r">R · высота</span><output id="axisRValue">75 мм</output></label><input id="axisR" type="range" min="0" max="150" value="75" step="1"></div><div class="axis-control"><label for="axisZ1"><span class="axis-key z">Z1 · левый упор</span><output id="axisZ1Value">−600 мм</output></label><input id="axisZ1" type="range" min="-600" max="-80" value="-600" step="1"></div><div class="axis-control"><label for="axisZ2"><span class="axis-key z">Z2 · правый упор</span><output id="axisZ2Value">600 мм</output></label><input id="axisZ2" type="range" min="80" max="600" value="600" step="1"></div><div class="axes-actions"><button id="gaugeHome">Исходное положение</button><button id="gaugeView">Вид на упоры</button></div><p class="axis-info">Движения в миллиметрах. Геометрия заднего упора схематичная; размеры механизмов требуют проверки.</p></section><section><h2>Гидравлика</h2><p class="note" id="hydroNote"></p></section><section><h2>Геометрия</h2><dl><dt>Рабочая длина</dt><dd id="lengthValue">3200 мм</dd><dt>Просвет между стенками</dt><dd id="gapValue">2600 мм</dd><dt>Отступы от краёв</dt><dd>300 + 300 мм</dd><dt>Высота</dt><dd>2950 мм</dd><dt>Глубина основания</dt><dd>2000 мм</dd><dt>Ширина стола</dt><dd>210 мм</dd><dt>Выступ низа боковин</dt><dd>72,5 мм</dd><dt>Боковины</dt><dd>40 мм</dd><dt>Глубина зева</dt><dd>350 мм</dd><dt>Смещение балки</dt><dd>150 мм</dd><dt>Болтов / цилиндр</dt><dd>8 · всего 16</dd><dt>Рёбер / плита</dt><dd>2</dd></dl></section><section><h2>Вид</h2><div class="views"><button data-view="iso">Общий</button><button data-view="front">Спереди</button><button data-view="side">Сбоку</button><button data-view="rear">Сзади</button></div><button class="wide" data-view="top">Сверху</button><button class="wide" id="boltsView">Крепление цилиндра · крупно</button><input id="edges" type="checkbox" hidden><p class="note">Совместимый режим 3D · без WebGL</p><label><input id="grid" type="checkbox" checked> Сетка пола</label><button class="wide" id="fit">Вписать в экран</button></section><button class="wide export" id="obj">Скачать модель OBJ</button><button class="wide" id="scad">Скачать модель OpenSCAD</button><p class="note">Вращение — левая кнопка мыши.<br>Перемещение — правая кнопка.<br>Масштаб — колесо; на телефоне — два пальца.</p><p class="note">Схематичная модель выбранного варианта. Недостающие размеры деталей приняты для визуализации. Не является рабочим чертежом или расчётом на 160 тс. Глубина основания — от переднего до заднего края опор. Зев — от оси инструмента до задней границы выреза.</p></aside><div class="stage" id="stage"><canvas id="c"></canvas><div class="badge"><small>СБОРКА / БЕЗ ИНСТРУМЕНТА</small><br><strong id="badge">3200 мм</strong></div><div class="help">Выберите длину • вращайте модель • скачайте геометрию</div><div id="error"></div><noscript><div style="position:absolute;inset:25%;background:white;padding:24px">Для интерактивной модели скачайте этот HTML-файл и откройте его в Chrome, Edge или Яндекс Браузере с включённым JavaScript.</div></noscript></div></main><script>console.warn('Scripts "build/three.js" and "build/three.min.js" are deprecated with r150+, and will be removed with r160. Please use ES Modules or alternatives: https://threejs.org/docs/index.html#manual/en/introduction/Installation'),
 /**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -163,54 +163,49 @@ function gaugeBox(parent,w,h,d,x,y,z,name,material=gaugeMetal){
  group.remove(m);parent.add(m);return m;
 }
 function buildBackgauge(){
- const wallInnerX=L/2-280-65;
- const railSpan=L-620,supportX=wallInnerX;
- // X guides fixed to inside surfaces of BOTH sidewalls, two parallel rails per side.
- // 1000 mm length supports 500 mm stroke with clearance at both extreme positions.
+ const railSpan=L-620,supportX=L/2-345;
+ // Static machine X rails stay mounted to both sidewalls.
  for(const sign of [-1,1]){
   const sx=sign*supportX;
-  for(const height of [745,885]){
-   gaugeBox(group,100,62,1000,sx+sign*25,height,-1050,'Gauge_X_wall_bracket_'+sign+'_'+height,gaugeMetal);
-   gaugeBox(group,45,25,1000,sx-sign*40,height,-1050,'Gauge_X_guide_'+sign+'_'+height,gaugeAccent);
+  for(const h of [745,885]){
+   gaugeBox(group,100,62,1000,sx+sign*25,h,-1050,'Gauge_X_wall_bracket_'+sign+'_'+h,gaugeMetal);
+   gaugeBox(group,45,25,1000,sx-sign*40,h,-1050,'Gauge_X_guide_'+sign+'_'+h,gaugeAccent);
   }
   const xs=cyl(16,850,sx,815,-1050,'Gauge_X_screw_'+sign,rodMetal);
   xs.rotation.x=Math.PI/2;
  }
  gaugeTravel=new THREE.Group();group.add(gaugeTravel);
- // Both support columns advance with the beam on X.
  for(const sign of [-1,1]){
   const sx=sign*supportX;
   gaugeBox(gaugeTravel,145,180,185,sx,815,-800,'Gauge_X_carriage_'+sign,gaugeMetal);
   gaugeBox(gaugeTravel,130,95,140,sx,815,-800,'Gauge_X_drive_'+sign,dark);
-  for(const height of [745,885]){
-   gaugeBox(gaugeTravel,90,55,115,sx-sign*40,height,-800,'Gauge_X_slide_'+sign+'_'+height,dark);
-  }
-  // R support is bolted to the X carriage. It remains at constant height
-  // as the beam rides up/down along its vertical sliding attachment.
-  gaugeBox(gaugeTravel,125,320,140,sx,955,-810,'Gauge_X_to_R_mount_'+sign,gaugeMetal);
-  gaugeBox(gaugeTravel,100,70,155,sx,880,-800,'Gauge_X_to_R_foot_'+sign,dark);
+  for(const h of [745,885])
+   gaugeBox(gaugeTravel,90,55,115,sx-sign*40,h,-800,'Gauge_X_slide_'+sign+'_'+h,dark);
+  // Fixed R column, rails and screw live on the moving X carriage.
+  // Top of fixed R guide <= top of beam in its lowest position.
+  gaugeBox(gaugeTravel,125,390,125,sx,960,-810,'Gauge_R_fixed_support_'+sign,gaugeMetal);
+  for(const dx of [-38,38])
+   gaugeBox(gaugeTravel,22,390,28,sx+dx,965,-740,'Gauge_R_fixed_rail_'+sign+'_'+dx,rodMetal);
+  const screw=cyl(13,340,sx,950,-710,'Gauge_R_leadscrew_'+sign,rodMetal);
+  group.remove(screw);gaugeTravel.add(screw);
+  gaugeBox(gaugeTravel,86,70,94,sx,790,-710,'Gauge_R_motor_'+sign,dark);
  }
+ // One R-lift assembly includes both side plates, all R bearing blocks, beam and Z fingers.
  gaugeLift=new THREE.Group();gaugeTravel.add(gaugeLift);
- // R lifts/lowers the COMPLETE backgauge assembly, including both side mechanisms.
- // Keep its outer side members flush with the top plane of the beam (Y=1172.5).
- // Only fixed X rails and their sliding X carriages remain outside this group.
  for(const sign of [-1,1]){
   const sx=sign*supportX;
-  gaugeBox(gaugeLift,100,240,115,sx,1052.5,-800,'Gauge_R_column_'+sign,gaugeMetal);
-  for(const offset of [-38,38]){
-   gaugeBox(gaugeLift,24,230,30,sx+offset,1057.5,-855,'Gauge_R_fixed_guide_'+sign+'_'+offset,rodMetal);
-   gaugeBox(gaugeLift,46,65,55,sx+offset,1015,-845,'Gauge_R_slide_'+sign+'_'+offset,dark);
-   gaugeBox(gaugeLift,46,65,55,sx+offset,1135,-845,'Gauge_R_slide_'+sign+'_'+offset+'_upper',dark);
-  }
-  const screw=cyl(15,210,sx,1057.5,-735,'Gauge_R_screw_'+sign,rodMetal);
-  group.remove(screw);gaugeLift.add(screw);
-  gaugeBox(gaugeLift,85,65,80,sx,962.5,-735,'Gauge_R_motor_'+sign,dark);
+  gaugeBox(gaugeLift,96,275,110,sx,1035,-800,'Gauge_R_moving_side_'+sign,gaugeMetal);
+  for(const dx of [-38,38])
+   for(const h of [875,965])
+    gaugeBox(gaugeLift,47,70,55,sx+dx,h,-738,'Gauge_R_moving_block_'+sign+'_'+dx+'_'+h,dark);
+  gaugeBox(gaugeLift,110,50,100,sx,970,-710,'Gauge_R_screw_nut_'+sign,dark);
   gaugeBox(gaugeLift,140,110,110,sx,1110,-800,'Gauge_R_beam_joint_'+sign,gaugeMetal);
  }
+ // Side plate and beam have the same upper plane (Y=1172.5 before R offset).
  gaugeBox(gaugeLift,railSpan,125,100,0,1110,-800,'Gauge_beam',gaugeMetal);
  gaugeBox(gaugeLift,railSpan-60,16,35,0,1155,-755,'Gauge_Z_rail',gaugeAccent);
  gaugeBox(gaugeLift,railSpan-70,24,28,0,1042,-755,'Gauge_Z_drive',dark);
- for(const [i,sign] of [[0,-1],[1,1]]){
+ for(let i=0;i<2;i++){
   const carrier=new THREE.Group();gaugeLift.add(carrier);gaugeStops.push(carrier);
   gaugeBox(carrier,115,110,135,0,1180,-790,'Gauge_Z'+(i+1)+'_carriage',dark);
   gaugeBox(carrier,90,35,330,0,1236,-590,'Gauge_Z'+(i+1)+'_finger',plateMat);
@@ -278,43 +273,42 @@ function download(text,name){const u=URL.createObjectURL(new Blob([text],{type:'
 function objText(){group.updateMatrixWorld(true);let out='# TOPSTANKI frame; units mm; schematic model\n',offset=1;for(const p of parts){out+='o '+p.name+'\n';const g=p.geometry.index?p.geometry.toNonIndexed():p.geometry;const pos=g.attributes.position;for(let i=0;i<pos.count;i++){const v=new THREE.Vector3().fromBufferAttribute(pos,i).applyMatrix4(p.matrixWorld);out+=`v ${v.x.toFixed(4)} ${v.y.toFixed(4)} ${v.z.toFixed(4)}\n`}for(let i=0;i<pos.count;i+=3)out+=`f ${offset+i} ${offset+i+1} ${offset+i+2}\n`;offset+=pos.count;if(g!==p.geometry)g.dispose()}return out}
 document.getElementById('obj').onclick=()=>download(objText(),'TOPSTANKI-frame-'+L+'.obj');
 function backgaugeScad(){
- const limit=gaugeBounds(L);
  return `
-// Schematic XRZ back gauge (OpenSCAD uses X = width, Y = rearward, Z = up)
-gaugeX = ${gaugeX}; // beam fore/aft 0..500 mm
-gaugeR = ${150-gaugeR}; // visual height offset, larger R command lowers assembly
-gaugeZ1 = ${gaugeZ1}; // left finger position
-gaugeZ2 = ${gaugeZ2}; // right finger position
-gaugeSpan = ${L-620};
+// Schematic XRZ assembly, millimeters. SCAD Y is machine rearward, Z is up.
+gaugeX = ${gaugeX};
+gaugeRheight = ${150-gaugeR};
+gaugeZ1 = ${gaugeZ1}; gaugeZ2 = ${gaugeZ2};
+gaugeSpan = ${L-620}; supportX = ${L/2-345};
 for(s=[-1,1]){
+ sx=s*supportX;
  for(h=[745,885]){
-  translate([s*(gaugeSpan/2-10),1050,h]) cube([100,1000,62],center=true);
-  translate([s*(gaugeSpan/2-75),1050,h]) cube([45,1000,25],center=true);
+  translate([sx+s*25,1050,h]) cube([100,1000,62],center=true);
+  translate([sx-s*40,1050,h]) cube([45,1000,25],center=true);
  }
 }
 translate([0,gaugeX,0]){
- for(s=[-1,1]) {
-  translate([s*(gaugeSpan/2-35),800,815]) cube([145,185,180],center=true);
-  translate([s*(gaugeSpan/2-35),800,815]) cube([130,140,95],center=true);
-  for(h=[745,885]) translate([s*(gaugeSpan/2-75),800,h]) cube([90,115,55],center=true);
-  // Fixed carriage-mounted R support. Overlaps moving R columns across all 150 mm.
-  translate([s*(gaugeSpan/2-35),810,955]) cube([125,140,320],center=true);
-  translate([s*(gaugeSpan/2-35),800,880]) cube([100,155,70],center=true);
+ for(s=[-1,1]){
+  sx=s*supportX;
+  translate([sx,800,815]) cube([145,185,180],center=true);
+  translate([sx,800,815]) cube([130,140,95],center=true);
+  for(h=[745,885]) translate([sx-s*40,800,h]) cube([90,115,55],center=true);
+  translate([sx,810,960]) cube([125,125,390],center=true);
+  for(dx=[-38,38]) translate([sx+dx,740,965]) cube([22,28,390],center=true);
+  translate([sx,710,950]) cylinder(h=340,r=13,center=true);
+  translate([sx,710,790]) cube([86,94,70],center=true);
  }
- translate([0,0,gaugeR]){
+ translate([0,0,gaugeRheight]){
   for(s=[-1,1]){
-   sx=s*(gaugeSpan/2-35);
-   translate([sx,800,1052.5]) cube([100,115,240],center=true);
-   for(dx=[-38,38]) {
-    translate([sx+dx,855,1057.5]) cube([24,30,230],center=true);
-    for(h=[1015,1135]) translate([sx+dx,845,h]) cube([46,55,65],center=true);
-   }
-   translate([sx,735,1057.5]) cylinder(h=210,r=15,center=true);
-   translate([sx,735,962.5]) cube([85,80,65],center=true);
+   sx=s*supportX;
+   translate([sx,800,1035]) cube([96,110,275],center=true);
+   for(dx=[-38,38]) for(h=[875,965])
+    translate([sx+dx,738,h]) cube([47,55,70],center=true);
+   translate([sx,710,970]) cube([110,100,50],center=true);
    translate([sx,800,1110]) cube([140,110,110],center=true);
   }
   translate([0,800,1110]) cube([gaugeSpan,100,125],center=true);
   translate([0,755,1155]) cube([gaugeSpan-60,35,16],center=true);
+  translate([0,755,1042]) cube([gaugeSpan-70,28,24],center=true);
   for(zpos=[gaugeZ1,gaugeZ2]){
    translate([zpos,790,1180]) cube([115,135,110],center=true);
    translate([zpos,590,1236]) cube([90,330,35],center=true);
