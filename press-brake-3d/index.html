@@ -326,8 +326,9 @@ function buildHydraulics(){
 // All dimensions are illustrative. X is machine width; Z points toward the operator.
 function buildCncScreen(){
  // Side-mounted touchscreen CNC on the RIGHT (positive-X) frame wall.
- // The 40-mm sidewall is centred approximately at x=L/2-280.
- const wallX=L/2-280,outerX=wallX+32;
+ // The right sidewall spans X=wallX-20..wallX+20. Fix the bracket to
+ // its actual outer X face, well behind the open front/throat (Z=-350).
+ const wallX=L/2-280,outerX=wallX+32,mountZ=-350;
  const armMat=new THREE.MeshStandardMaterial({color:0x566965,roughness:.45,metalness:.42});
  const panelMat=new THREE.MeshStandardMaterial({color:0x303b39,roughness:.48,metalness:.28});
  const glassMat=new THREE.MeshStandardMaterial({color:0x284f60,roughness:.17,metalness:.08});
@@ -335,19 +336,20 @@ function buildCncScreen(){
  const accentMat=new THREE.MeshStandardMaterial({color:0xe88a34,roughness:.4,metalness:.22});
  const uiMat=new THREE.MeshStandardMaterial({color:0x75a8ba,roughness:.3,metalness:.02});
  // Base is bolted directly onto the outer SIDE face of the vertical frame.
- box(24,225,185,outerX,1570,90,'CNC_sidewall_mount_plate').material=armMat;
+ box(24,225,185,outerX,1570,mountZ,'CNC_sidewall_mount_plate').material=armMat;
  for(const dy of [-75,75])for(const dz of [-55,55]){
-  const bolt=cyl(9,8,outerX+14,1570+dy,90+dz,'CNC_mount_bolt_'+dy+'_'+dz,edgeMat);
+  const bolt=cyl(9,8,outerX+14,1570+dy,mountZ+dz,'CNC_mount_bolt_'+dy+'_'+dz,edgeMat);
   bolt.rotation.z=Math.PI/2;
  }
  // Horizontal articulated arm anchored in the sidewall and extending right.
- box(55,55,90,outerX+52,1650,90,'CNC_sidewall_shoulder').material=armMat;
- const shoulder=cyl(37,60,outerX+80,1650,90,'CNC_sidewall_pivot',accentMat);
+ box(55,55,90,outerX+52,1650,mountZ,'CNC_sidewall_shoulder').material=armMat;
+ const shoulder=cyl(37,60,outerX+80,1650,mountZ,'CNC_sidewall_pivot',accentMat);
  shoulder.rotation.z=Math.PI/2;
- box(255,48,48,outerX+190,1650,90,'CNC_swing_arm_1').material=armMat;
- cyl(30,56,outerX+316,1650,90,'CNC_arm_elbow',armMat);
- // Forward swing arm holds the touchscreen facing the machine operator.
- box(52,52,390,outerX+316,1650,296,'CNC_swing_arm_2').material=armMat;
+ box(255,48,48,outerX+190,1650,mountZ,'CNC_swing_arm_1').material=armMat;
+ cyl(30,56,outerX+316,1650,mountZ,'CNC_arm_elbow',armMat);
+ // Forward swing arm bridges the sidewall anchor to the operator-side panel.
+ const headZ=505,armDepth=headZ-mountZ;
+ box(52,52,armDepth,outerX+316,1650,(mountZ+headZ)/2,'CNC_swing_arm_2').material=armMat;
  const head=cyl(31,62,outerX+316,1650,505,'CNC_touchscreen_swivel',armMat);
  head.rotation.x=Math.PI/2;
  const cx=outerX+316,cy=1680,cz=580;
