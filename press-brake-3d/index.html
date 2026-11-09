@@ -48,7 +48,7 @@ const plateMat=new THREE.MeshStandardMaterial({color:0xb6bcb9,roughness:.47,meta
 const lineMat=new THREE.LineBasicMaterial({color:0x485a51,transparent:true,opacity:.34});
 let stroke=0,y1Stroke=0,y2Stroke=0,moving=[],rods=[],ramAssembly=null,running=false,animationTime=0;
 let crownC=0,crownSegments=[],crownUpper=[],crownSupported=[];
-let bendAngle=0,bendBusy=false,bendToken=0,gaugeApproachToken=0,gaugeApproaching=false,sheetTargetX=250,sheetGroup=null,sheetBack=null,sheetBackPivot=null,sheetFlange=null,sheetPivot=null,pedalGroup=null,pedalPlate=null,pedalClickable=[];
+let bendAngle=0,bendBusy=false,bendToken=0,gaugeApproachToken=0,gaugeApproaching=false,sheetFollowsGauge=false,sheetBendX=250,sheetTargetX=250,sheetGroup=null,sheetBack=null,sheetBackPivot=null,sheetFlange=null,sheetPivot=null,pedalGroup=null,pedalPlate=null,pedalClickable=[];
 // Common bending centreline of the lower bed and upper ram lip, in scene Z coordinates.
 const X_DATUM_Z=177.5;
 const GAUGE_FINGER_TIP_Z=-590+330/2;
@@ -509,13 +509,16 @@ function updateBendingSimulation(){
  const enabled=document.getElementById('bendSim').checked;
  sheetGroup.visible=enabled;pedalGroup.visible=enabled;
  if(!enabled)return;
- // Sheet remains fixed in space while the X fingers approach its long rear edge.
- // The 1500 x 500 blank has a fixed 250 mm rear flange for this demo.
- const backDepth=sheetTargetX;
+ // Until contact, keep the blank stationary. Once the backgauge touches it,
+ // changing X feeds the WHOLE 500 mm sheet along machine depth (world Z).
+ // When bending begins, freeze both flange lengths to retain a rigid bent part.
+ const attached=sheetFollowsGauge&&!gaugeApproaching;
+ const backDepth=bendBusy||bendAngle>0 ? sheetBendX : attached ? gaugeX : sheetTargetX;
  const frontDepth=500-backDepth;
  const sheetX=0;
  const y=1103+crownC*crownWeight(sheetX);
  const bendZ=X_DATUM_Z;
+ sheetGroup.position.z=(bendBusy||bendAngle>0)&&attached ? sheetBendX-gaugeX : 0;
  // Both free edges travel toward the bend line in the depth (Z) direction.
  // A finished 90-degree inside angle is two symmetric 45-degree rotations.
  const halfBend=bendAngle*Math.PI/360;
@@ -531,13 +534,14 @@ function updateBendingSimulation(){
  sheetFlange.position.set(0,0,frontDepth/2);
  if(pedalPlate)pedalPlate.rotation.x=bendBusy?-.16:0;
  const out=document.getElementById('bendInfo');
- if(out)out.textContent='Лист 1500 × 500 × 2 мм; упоры X='+gaugeX.toFixed(0)+' мм; торец листа X='+sheetTargetX+' мм; внутренний угол='+(180-bendAngle).toFixed(0)+'°; гиб от плоскости='+bendAngle.toFixed(0)+'°. '+(bendBusy?'Плавная гибка: оба края сходятся к линии гиба':gaugeApproaching?'Упоры автоматически подъезжают к торцу листа':bendAngle>=90?'Деталь согнута на 90° и сохраняет форму':'Упоры выставлены по торцу, готово к гибке');
+ if(out)out.textContent='Лист 1500 × 500 × 2 мм; упоры X='+gaugeX.toFixed(0)+' мм; торец листа X='+sheetTargetX+' мм; внутренний угол='+(180-bendAngle).toFixed(0)+'°; гиб от плоскости='+bendAngle.toFixed(0)+'°. '+(bendBusy?'Плавная гибка: оба края сходятся к линии гиба':gaugeApproaching?'Упоры автоматически подъезжают к торцу листа':bendAngle>=90?'Деталь согнута на 90° и сохраняет форму':attached?'Лист следует за упорами при изменении X':'Ожидание контакта с упорами');
 }
 function cancelGaugeApproach(){gaugeApproachToken++;gaugeApproaching=false;}
 function approachSheetEdge(){
  cancelGaugeApproach();
  // Start the X carriage away from the stationary blank, then bring both fingers
  // into contact with the 1500-mm long rear edge. Z fingers stay on that edge.
+ sheetFollowsGauge=false;
  const sideSpan=Math.min(600,gaugeBounds(L));
  gaugeZ1=-sideSpan;gaugeZ2=sideSpan;
  gaugeR=140; // finger Y interval 1086..1121 mm encloses the 1103-mm sheet
@@ -550,7 +554,7 @@ function approachSheetEdge(){
   const t=Math.max(0,Math.min(1,(now-started)/1100));
   const eased=t*t*(3-2*t);
   gaugeX=fromX+(sheetTargetX-fromX)*eased;
-  if(t>=1){gaugeX=sheetTargetX;gaugeApproaching=false;}
+  if(t>=1){gaugeX=sheetTargetX;gaugeApproaching=false;sheetFollowsGauge=true;}
   updateBackgauge();
   if(t<1)requestAnimationFrame(frame);
  }
@@ -564,8 +568,8 @@ function cancelBending(){
 function bendCycle(){
  if(!document.getElementById('bendSim').checked||bendBusy||gaugeApproaching)return;
  if(bendAngle>=90){document.getElementById('bendInfo').textContent='Деталь уже согнута на 90°. Для следующего цикла нажмите «Сброс детали».';return;}
- if(Math.abs(gaugeX-sheetTargetX)>0.5){
-  document.getElementById('bendInfo').textContent='Упоры не касаются торца листа. Включите эмуляцию повторно для автоматического подвода X.';
+ if(!sheetFollowsGauge){
+  document.getElementById('bendInfo').textContent='Дождитесь контакта упоров с торцом листа.';
   return;
  }
  if(gaugeX<45||gaugeX>480){
@@ -577,7 +581,7 @@ function bendCycle(){
   return;
  }
  stop();
- bendBusy=true;bendAngle=0;document.getElementById('syncY').checked=true;
+ bendBusy=true;bendAngle=0;sheetBendX=gaugeX;document.getElementById('syncY').checked=true;
  const token=++bendToken,oldY=(y1Stroke+y2Stroke)/2;
  // Nominal punch penetration for the demonstration; does not calculate force.
  // During the forming stage the ram descends while BOTH halves approach the V centre.
@@ -614,8 +618,8 @@ function bendCycle(){
 }
 document.getElementById('bendSim').onchange=e=>{
  if(bendBusy){cancelBending();setStroke(0);}
- cancelGaugeApproach();
- bendAngle=0;
+ cancelGaugeApproach();sheetFollowsGauge=false;
+ bendAngle=0;sheetGroup.position.z=0;
  if(e.target.checked)approachSheetEdge();
  else {updateBendingSimulation();render();}
 };
