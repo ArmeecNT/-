@@ -487,8 +487,8 @@ function multiVDieScad(){
  const poly=[[-30,0],[30,0],[30,18],[22,29],[30,40],[30,60],[11,60],[0,60-h],[-11,60],[-30,60],[-30,40],[-22,29],[-30,18]];
  // Rotate 2D width/height profile so the die runs along machine X.
  // The cross-section is placed in the same longitudinal datum as the die holder.
- return '\\n// M.460.R schematic multi-V die H60 W60, V22/85deg on top.\\n'
-  +'translate(['+(-L/2)+',-177.5,1012]) rotate([90,0,90]) linear_extrude(height='+L+') polygon('+JSON.stringify(poly)+');\\n';
+ return '\n// M.460.R schematic multi-V die H60 W60, V22/85deg on top.\n'
+  +'translate(['+(-L/2)+',-177.5,1012]) rotate([90,0,90]) linear_extrude(height='+L+') polygon('+JSON.stringify(poly)+');\n';
 }
 function holderScad(){
  const n=Math.ceil(L/200),pitch=L/n;
