@@ -170,8 +170,8 @@ function buildBackgauge(){
  for(const sign of [-1,1]){
   const sx=sign*supportX;
   for(const height of [745,885]){
-   gaugeBox(group,68,62,1000,sx,height,-1050,'Gauge_X_wall_bracket_'+sign+'_'+height,gaugeMetal);
-   gaugeBox(group,45,25,1000,sx,height,-1050,'Gauge_X_guide_'+sign+'_'+height,gaugeAccent);
+   gaugeBox(group,100,62,1000,sx+sign*25,height,-1050,'Gauge_X_wall_bracket_'+sign+'_'+height,gaugeMetal);
+   gaugeBox(group,45,25,1000,sx-sign*40,height,-1050,'Gauge_X_guide_'+sign+'_'+height,gaugeAccent);
   }
   gaugeBox(group,130,95,140,sx,815,-1050,'Gauge_X_drive_'+sign,dark);
   const xs=cyl(16,850,sx,815,-1050,'Gauge_X_screw_'+sign,rodMetal);
@@ -183,7 +183,7 @@ function buildBackgauge(){
   const sx=sign*supportX;
   gaugeBox(gaugeTravel,145,180,185,sx,815,-800,'Gauge_X_carriage_'+sign,gaugeMetal);
   for(const height of [745,885]){
-   gaugeBox(gaugeTravel,90,55,115,sx,height,-800,'Gauge_X_slide_'+sign+'_'+height,dark);
+   gaugeBox(gaugeTravel,90,55,115,sx-sign*40,height,-800,'Gauge_X_slide_'+sign+'_'+height,dark);
   }
   gaugeBox(gaugeTravel,100,430,115,sx,1065,-800,'Gauge_R_column_'+sign,gaugeMetal);
   const screw=cyl(15,370,sx,1090,-735,'Gauge_R_screw_'+sign,rodMetal);
@@ -273,16 +273,16 @@ gaugeZ2 = ${gaugeZ2}; // right finger position
 gaugeSpan = ${L-620};
 for(s=[-1,1]){
  for(h=[745,885]){
-  translate([s*(gaugeSpan/2-30),1050,h]) cube([68,1000,62],center=true);
-  translate([s*(gaugeSpan/2-30),1050,h]) cube([45,1000,25],center=true);
+  translate([s*(gaugeSpan/2-10),1050,h]) cube([100,1000,62],center=true);
+  translate([s*(gaugeSpan/2-75),1050,h]) cube([45,1000,25],center=true);
  }
- translate([s*(gaugeSpan/2-30),1050,815]) cube([130,140,95],center=true);
+ translate([s*(gaugeSpan/2-35),1050,815]) cube([130,140,95],center=true);
 }
 translate([0,gaugeX,0]){
  for(s=[-1,1]) {
-  translate([s*(gaugeSpan/2-30),800,815]) cube([145,185,180],center=true);
-  for(h=[745,885]) translate([s*(gaugeSpan/2-30),800,h]) cube([90,115,55],center=true);
-  translate([s*(gaugeSpan/2-30),800,1065]) cube([100,115,430],center=true);
+  translate([s*(gaugeSpan/2-35),800,815]) cube([145,185,180],center=true);
+  for(h=[745,885]) translate([s*(gaugeSpan/2-75),800,h]) cube([90,115,55],center=true);
+  translate([s*(gaugeSpan/2-35),800,1065]) cube([100,115,430],center=true);
  }
  translate([0,0,gaugeR]){
   translate([0,800,1110]) cube([gaugeSpan,100,125],center=true);
