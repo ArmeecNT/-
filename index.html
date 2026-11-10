@@ -62,6 +62,7 @@ function inputNumber(id){const raw=$(id).value.trim();return raw===''?NaN:Number
 const foldNumber=(side,fold,m=model)=>m.sides[side].length-fold;
 const foldLabel=(side,fold)=>side===4?'Дно':names[side]+foldNumber(side,fold);
 let editSides=structuredClone(defs.sides),projectionFit=null;
+let targetYaw=yaw,targetPitch=pitch,targetOrientation=[...orientation];
 function renderSideInputs(){
  $('sides').innerHTML=editSides.map((side,i)=>`<div class="side-card"><div class="view-head"><strong>Борт ${names[i]} · ${directionDegrees[i]}°</strong><button data-add="${i}" ${side.length>=8?'disabled':''}>+ Добавить гиб у края</button></div><table class="fold-table"><thead><tr><th>Гиб</th><th>Полка, мм</th><th>Внутр. угол</th><th>Направл.</th><th></th></tr></thead><tbody>${side.map((f,j)=>({f,j})).reverse().map(({f,j})=>`<tr><td>${side.length-j}</td><td><input id="fh_${i}_${j}" type="number" min="0" max="1000" value="${f.h}" aria-label="Полка ${names[i]}${side.length-j}"></td><td><input id="fa_${i}_${j}" type="number" min="5" max="180" value="${f.a}" aria-label="Угол ${names[i]}${side.length-j}"></td><td><select id="fs_${i}_${j}" aria-label="Направление ${names[i]}${side.length-j}"><option value="1" ${f.sign===1?'selected':''}>↑</option><option value="-1" ${f.sign===-1?'selected':''}>↓</option></select></td><td><button data-remove="${i}:${j}" ${side.length===1?'disabled':''} aria-label="Удалить гиб ${names[i]}${side.length-j}">×</button></td></tr>`).join('')}</tbody></table></div>`).join('');
  // Explicit values also support restored projects without relying on selected markup.
@@ -607,14 +608,14 @@ $('timeline').addEventListener('input',()=>{progress=Number($('timeline').value)
 function quaternionProduct(a,b){
  return [a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1],a[3]*b[1]-a[0]*b[2]+a[1]*b[3]+a[2]*b[0],a[3]*b[2]+a[0]*b[1]-a[1]*b[0]+a[2]*b[3],a[3]*b[3]-a[0]*b[0]-a[1]*b[1]-a[2]*b[2]];
 }
-function applyRotation(q){const v=quaternionProduct(q,orientation),n=Math.hypot(...v);orientation=v.map(x=>x/n);}
+function applyRotation(q){const v=quaternionProduct(q,targetOrientation),n=Math.hypot(...v);targetOrientation=v.map(x=>x/n);}
 function rotateQuaternion(v,q){const t=mul(cross(q.slice(0,3),v),2);return add(v,add(mul(t,q[3]),cross(q.slice(0,3),t)));}
-function resetView(){projectionFit=null;zoom=1;orientation=[0,0,0,1];panX=panY=0;startGesture();}
+function resetView(){projectionFit=null;zoom=1;orientation=targetOrientation=[0,0,0,1];targetYaw=yaw;targetPitch=pitch;panX=panY=0;startGesture();}
 function arcball(point){
  const rect=$('view').getBoundingClientRect(),r=Math.max(1,Math.min(rect.width,rect.height)/2),x=(point.x-(rect.left||0)-rect.width/2-panX)/r,y=(-(point.y-(rect.top||0)-rect.height/2-12-panY))/r,d=x*x+y*y;
  return unit([x,y,d<=.5?Math.sqrt(1-d):.5/Math.sqrt(d)]);
 }
-function rotateDrag(from,to){if($('lockVertical').checked){yaw+=(to.x-from.x)*.006;pitch=clamp(pitch-(to.y-from.y)*.006,-1.48,1.48);orientation=[0,0,0,1];return;}const a=arcball(from),b=arcball(to),q=[...cross(a,b),1+dot(a,b)],n=Math.hypot(...q);if(n>1e-8)applyRotation(q.map(x=>x/n));}
+function rotateDrag(from,to){if($('lockVertical').checked){targetYaw+=(to.x-from.x)*.006;targetPitch=clamp(targetPitch-(to.y-from.y)*.006,-1.48,1.48);targetOrientation=[0,0,0,1];return;}const a=arcball(from),b=arcball(to),q=[...cross(a,b),1+dot(a,b)],n=Math.hypot(...q);if(n>1e-8)applyRotation(q.map(x=>x/n));}
 function zoomView(value,point){
  const next=clamp(value,.2,8),ratio=next/zoom;
  if(point){const rect=$('view').getBoundingClientRect(),x=point.x-(rect.left||0)-rect.width/2,y=point.y-(rect.top||0)-rect.height/2-12;panX=x-(x-panX)*ratio;panY=y-(y-panY)*ratio;}
@@ -627,7 +628,7 @@ function startGesture(){
  drag=list.length===1?{...list[0]}:null;
 }
 function setViewMode(mode){viewMode=mode;for(const [id,v]of [['rotateMode','rotate'],['panMode','pan']])$(id).setAttribute('aria-pressed',String(v===mode));startGesture();}
-$('lockVertical').onchange=()=>{if($('lockVertical').checked){orientation=[0,0,0,1];pitch=clamp(pitch,-1.48,1.48);}startGesture();dirty=true;};$('rotateMode').onclick=()=>setViewMode('rotate');$('panMode').onclick=()=>setViewMode('pan');
+$('lockVertical').onchange=()=>{if($('lockVertical').checked){orientation=targetOrientation=[0,0,0,1];pitch=targetPitch=clamp(pitch,-1.48,1.48);targetYaw=yaw;}startGesture();dirty=true;};$('rotateMode').onclick=()=>setViewMode('rotate');$('panMode').onclick=()=>setViewMode('pan');
 $('view').addEventListener('contextmenu',e=>e.preventDefault());
 $('view').addEventListener('pointerdown',e=>{e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,pan:e.button===1||e.button===2||e.shiftKey});$('view').setPointerCapture(e.pointerId);startGesture();});
 $('view').addEventListener('pointermove',e=>{
@@ -637,7 +638,7 @@ $('view').addEventListener('pointermove',e=>{
   const distance=Math.hypot(list[0].x-list[1].x,list[0].y-list[1].y),angle=Math.atan2(list[1].y-list[0].y,list[1].x-list[0].x),center={x:(list[0].x+list[1].x)/2,y:(list[0].y+list[1].y)/2};
   zoomView(zoom*distance/Math.max(1,gesture.distance),gesture.center);
   panX+=center.x-gesture.center.x;panY+=center.y-gesture.center.y;
-  const roll=-(angle-gesture.angle);if(!$('lockVertical').checked)applyRotation([0,0,Math.sin(roll/2),Math.cos(roll/2)]);
+  const rawRoll=angle-gesture.angle,roll=-Math.atan2(Math.sin(rawRoll),Math.cos(rawRoll));if(!$('lockVertical').checked)applyRotation([0,0,Math.sin(roll/2),Math.cos(roll/2)]);
   gesture={distance,angle,center};
  }else if(list.length===1&&drag){
   if(viewMode==='pan'||old.pan||e.shiftKey){panX+=e.clientX-drag.x;panY+=e.clientY-drag.y;}else rotateDrag(drag,list[0]);
@@ -649,6 +650,17 @@ for(const ev of ['pointerup','pointercancel','lostpointercapture'])$('view').add
 $('view').addEventListener('wheel',e=>{e.preventDefault();const unit=e.deltaMode===1?16:e.deltaMode===2?$('view').getBoundingClientRect().height:1;zoomView(zoom*Math.exp(-e.deltaY*unit*.001),{x:e.clientX,y:e.clientY});},{passive:false});
 $('zoomIn').onclick=()=>{zoomView(zoom*1.2);};$('zoomOut').onclick=()=>{zoomView(zoom/1.2);};$('showMachine').onchange=()=>{dirty=true;};$('showFrame').onchange=()=>{dirty=true;};
 const sizeObserver=new ResizeObserver(()=>{dirty=true;drawFlat();});for(const id of ['view','cross','contactView','flat'])sizeObserver.observe($(id));
-function tick(ts){const dt=Math.min(.06,(ts-last)/1000||0);last=ts;if(playing){progress=Math.min(playStop,progress+dt*.42);$('timeline').value=progress;dirty=true;if(progress>=playStop-1e-9){playing=false;$('play').textContent='▶ Пуск'}}if(dirty){draw3D();dirty=false}requestAnimationFrame(tick)}
+function easeCamera(dt){
+ const alpha=1-Math.exp(-Math.min(.06,Math.max(0,dt))*16);
+ const dy=targetYaw-yaw,dp=targetPitch-pitch;
+ if(Math.abs(dy)>1e-5||Math.abs(dp)>1e-5){yaw+=dy*alpha;pitch+=dp*alpha;if(Math.abs(targetYaw-yaw)<1e-5)yaw=targetYaw;if(Math.abs(targetPitch-pitch)<1e-5)pitch=targetPitch;dirty=true;}
+ // Shortest quaternion interpolation avoids sudden inversions when rotating freely.
+ let goal=targetOrientation;const dotQ=orientation.reduce((v,x,i)=>v+x*goal[i],0);
+ if(dotQ<0)goal=goal.map(x=>-x);
+ const diff=Math.hypot(...orientation.map((x,i)=>x-goal[i]));
+ if(diff>1e-5){const q=orientation.map((x,i)=>x+(goal[i]-x)*alpha),len=Math.hypot(...q);orientation=q.map(x=>x/len);dirty=true;}
+ else if(diff>0){orientation=[...goal];dirty=true;}
+}
+function tick(ts){const dt=Math.min(.06,(ts-last)/1000||0);last=ts;easeCamera(dt);if(playing){progress=Math.min(playStop,progress+dt*.42);$('timeline').value=progress;dirty=true;if(progress>=playStop-1e-9){playing=false;$('play').textContent='▶ Пуск'}}if(dirty){draw3D();dirty=false}requestAnimationFrame(tick)}
 window.BDC={getModel:()=>structuredClone(model),program:()=>structuredClone(programRows),diagnostics:()=>structuredClone(programIssues),actionAt:(value=progress)=>structuredClone(actionAt(value)),setModel:m=>{model=validate(structuredClone(m));fill()},getReport:()=>structuredClone(lastReport),foldSequence:()=>structuredClone(foldSequence()),foldAnglesAt,profile2D:(side,angles=foldAnglesAt(progress)[side])=>structuredClone(profile2D(model,side,angles)),cycleCount:()=>cycleCount(),bendContact:(side,angle,fold=0)=>structuredClone(bendContact(model,side,angle,fold)),anglesAt,conflicts,sweep,allowance,blankSize,wallHeight,bendRadii:()=>({inner:model.radius,outer:model.thickness,neutral:model.radius+model.thickness/2,lowerKnife:KNIFE_RADIUS,upperKnife:KNIFE_RADIUS}),loadFile,toolSetup:()=>toolSetup(model),clampAssembly:()=>structuredClone(clampAssembly(model)),tableGeometry:(active=activeAt(progress))=>structuredClone(tableGeometry(model,active)),benderGeometry:(value=progress)=>structuredClone(benderGeometry(model,value)),clampProfile:()=>structuredClone(CLAMP_PROFILE),rasterScene,getFit:()=>lastFit,partPose:(value=progress)=>structuredClone(partPose(model,value)),handlingSetup:()=>structuredClone(handlingSetup(model)),getScene:()=>lastScene?structuredClone(lastScene):null,getRasterStats:()=>lastRaster?({width:lastRaster.width,height:lastRaster.height,faces:lastRaster.faces,visibleEdges:lastRaster.visibleEdges,uniqueEdges:lastRaster.uniqueEdges,duplicateEdges:lastRaster.duplicateEdges}):null};model=validate(model);fill();requestAnimationFrame(tick);
 </script></body></html>
