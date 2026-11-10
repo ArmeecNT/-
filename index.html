@@ -133,7 +133,7 @@ function programDiagnostics(m,rows,hits=[]){
    let x=0,z=0;for(let i=0;i<=90;i++){const b=benderGeometry(m,row.start+(row.end-row.start)*i/90);x=Math.max(x,Math.abs(b.yOffset));z=Math.max(z,Math.abs(b.zOffset));}
    if(m.frameHorizontalLimit>0&&x>m.frameHorizontalLimit)issue(row,'SIM-KX','Горизонтальное смещение рамы превышает введённый предел.');
    if(m.frameVerticalLimit>0&&z>m.frameVerticalLimit)issue(row,'SIM-KZ','Вертикальное смещение рамы превышает введённый предел.');
-   if(f.a<90)issue(row,'SIM-ARC90','Круглая кромка ножа занимает 90°; дальнейшее взаимодействие при остром внутреннем угле не подтверждено.','warn');
+   if(f.a<90)issue(row,'SIM-ARC90','Запрошен гиб более 90° (внутренний угол менее 90°), но показанная траектория ножа ограничена 90°. Такая симуляция не подтверждена; требуется проверенная геометрия инструмента и кинематика станка.');
    if(f.sign<0)issue(row,'SIM-DOWN','Для гиба вниз требуется объёмная проверка стола и захвата.','warn');
    if(row.fold>0)issue(row,'SIM-MULTI','Дополнительная линия: геометрия и подача рассчитаны; контакт прижима с соседними полками требует проверки.','warn');
   }
