@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BDC3200 — симулятор панелегиба</title>
+<style>
+:root{color-scheme:dark;--bg:#0f141c;--panel:#19212d;--line:#2b3747;--muted:#a7b4c7;--accent:#ff8a38;--fg:#edf2f8}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,Segoe UI,sans-serif}header{padding:20px 28px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:18px}h1{font-size:23px;margin:0}h1 span{color:var(--accent)}.sub,small{color:var(--muted)}.sub{margin-top:4px;font-size:13px}main{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;padding:18px;max-width:1800px;margin:auto}aside,section{min-width:0}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}h2{font-size:16px;margin:0 0 12px}label{display:block;font-size:13px;color:var(--muted);margin-bottom:10px}input,select,button{font:inherit;color:var(--fg);border:1px solid #41506a;border-radius:7px;background:#111923}input,select{width:100%;padding:8px;margin-top:4px}button{padding:9px 13px;cursor:pointer}button[aria-pressed="true"]{background:#45301f;border-color:var(--accent);color:#ffc393}#view{cursor:grab}#view:active{cursor:grabbing}button:hover{border-color:var(--accent)}button:disabled{opacity:.4;cursor:default}.primary{background:var(--accent);color:#201407;border:0;font-weight:600}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pill{border:1px solid var(--line);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted)}#view{width:100%;height:480px;display:block;touch-action:none;background:linear-gradient(#182332,#111a25);border-radius:8px}#cross{width:100%;height:210px;display:block;background:#121a25;border-radius:8px}.view-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.view-head h2{margin:0}.hint{font-size:12px;color:var(--muted);margin-top:8px}.progress-row{display:flex;gap:16px;align-items:center;margin:12px 0}.progress-row input{margin:0;accent-color:var(--accent)}.stage{min-height:24px;color:var(--accent)}.stats{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;padding:10px 0}.stats b{font-size:17px;display:block}#checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}.check{padding:10px;border-radius:8px;background:#111923;border-left:3px solid #607189;font-size:13px}.check.ok{border-color:#7ad7a0}.check.fail{border-color:#fb776d}.check.warn{border-color:#e5bf62}.check strong{display:block;margin-bottom:3px}.check small{font-size:12px}.notice{background:#302a1c;color:#efce81;padding:12px;border-radius:8px;font-size:13px;margin-bottom:14px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:7px 5px;text-align:left}td input,td select{padding:6px;margin:0;min-width:65px}td select{min-width:95px}summary{cursor:pointer;margin-bottom:10px}details p,details li{color:var(--muted);font-size:13px}a{color:#f8af78}.foot{font-size:12px;color:var(--muted);padding:0 4px 12px}#status{font-size:18px;margin:0 0 4px}#status.blocked{color:#fb776d}#status.conditional{color:#e5bf62}#flat{width:100%;height:220px;display:block;background:#121a25;border-radius:8px}.row-scroll{overflow-x:auto}.error{color:#fb776d;min-height:20px;font-size:13px}.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.file-label{display:inline-block;margin:0}.file-label input{display:none}#printReport{display:none}@media(max-width:1050px){main{grid-template-columns:290px minmax(0,1fr)}#view{height:390px}.two{grid-template-columns:1fr}#checks{grid-template-columns:1fr}}@media(max-width:730px){main{display:flex;flex-direction:column;padding:10px;gap:0}header{padding:14px;display:block}header .pill{display:inline-block;margin-top:8px}aside{order:1}section{order:0}#view{height:340px}.panel{padding:12px}h1{font-size:20px}#checks{grid-template-columns:1fr}.toolbar button{padding:8px 10px}.grid{grid-template-columns:1fr 1fr}}@media print{body{background:white;color:black}header,main{display:none}#printReport{display:block}#printReport h1{color:black}#printReport td,#printReport th{border-color:#999}#printReport p{font-size:12px}}
+</style>
+<style>
+input,select{font-size:16px}button{min-height:42px}.view-head{flex-wrap:wrap}.progress-row{gap:8px}.progress-row input{width:0;min-width:60px;flex:1}.view-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.view-controls label{margin:0;color:var(--fg)}.view-controls input{width:auto;margin:0 5px 0 0}.view-controls button{padding:6px 12px}#view{height:clamp(320px,54vh,660px)}input[type=range]{min-height:40px}#stage{overflow-wrap:anywhere}@media(max-width:1050px){main{grid-template-columns:285px minmax(0,1fr)}}@media(max-width:850px){main{display:flex;flex-direction:column;padding:10px;gap:0}aside{order:1}section{order:0}.two{grid-template-columns:1fr}#checks{grid-template-columns:1fr}.view-head .toolbar{width:100%}.view-head .toolbar button{flex:1}#view{height:clamp(290px,48svh,520px)}.panel{padding:12px}.progress-row button{padding:8px 11px;min-width:42px}table{table-layout:fixed}td input,td select{width:100%;min-width:0}td select{font-size:14px;padding:6px 2px}th:first-child{width:37%}.stats{gap:10px;justify-content:space-between}.stats b{font-size:15px}}@media(max-width:380px){header{padding:12px}.grid{gap:0 8px}.progress-row{gap:5px}.progress-row button{padding:7px 9px}#play{font-size:14px}#view{height:300px}h2{font-size:15px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+#program tr.current{background:#45301f}#program tr.problem{color:#ffaaa1}#program button{min-height:32px;padding:3px 8px}#programTable{table-layout:auto;min-width:560px}#programWrap{max-height:300px;overflow:auto}#programTable th:first-child{width:auto}.action-state{font-size:12px;color:#a7b4c7;margin-top:7px}
+.side-card{margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:9px}.side-card .view-head{margin-bottom:8px}.side-card strong{font-size:13px}.side-card button{min-height:34px;padding:4px 8px;font-size:12px}.fold-table{table-layout:fixed;font-size:12px}.fold-table th:first-child{width:30px}.fold-table th:nth-child(2),.fold-table th:nth-child(3){width:28%}.fold-table th:nth-child(4){width:45px}.fold-table th:last-child{width:27px}.fold-table td{padding:4px 2px}.fold-table input,.fold-table select{font-size:14px;min-width:0}.fold-table button{min-width:25px;padding:3px}.playback-bar{margin-top:10px;padding:8px 10px;background:#111923;border:1px solid var(--line);border-radius:9px}.playback-bar .progress-row{margin:0}.playback-bar #stage{font-size:13px}.playback-bar .single-step{margin:5px 0 0;font-size:12px}.playback-bar #actionState{margin:2px 0}.view-controls label{font-size:12px}
+</style>
+</head>
+<body>
+<header><div><h1><span>BDC3200</span> / симуляция панелегиба</h1><div class="sub">Без автоматической смены инструмента · прямоугольная панель с четырьмя бортами · прототип 4.2</div></div><span class="pill">Работает без интернета</span></header>
+<main>
+<aside>
+<div class="panel"><h2>Деталь</h2><div class="grid">
+<label>Длина заготовки, мм<input id="blankLength" type="number" min="10" max="5000" step="1" value="1000"></label>
+<label>Ширина заготовки, мм<input id="blankWidth" type="number" min="10" max="5000" step="1" value="700"></label>
+<label>Толщина металла, мм<input id="thickness" type="number" min="0.1" max="10" step="0.05" value="1"></label>
+</div><small id="partInfo"></small><div id="partError" class="error" role="alert"></div></div>
+<div class="panel"><h2>Борта и порядок гибки</h2><small style="display:block;margin-bottom:10px">Гибы нумеруются от края заготовки к дну: №1 — крайняя полка (например, 20 мм), №2 — следующая (например, 100 мм). Полка — прямой участок между соседними гибами либо от крайнего гиба до края. Угол 180° — плоское состояние; направление каждого гиба задаётся отдельно. До 8 гибов на сторону.</small><div id="sides"></div><label style="margin-top:12px">Стороны: короткие → длинные<input id="order" type="text" readonly></label><small id="orderHint"></small></div>
+<div class="panel"><h2>Профиль станка</h2><label>Материал для проверки<select id="material"><option value="steel">Холоднокатаная сталь</option><option value="inox">Нержавеющая сталь 304</option><option value="aluminum">Алюминий</option></select></label><label>Угловой зазор, мм<input id="gap" type="number" min="0" max="100" step="0.5" value="4"></label><small style="display:block;margin-bottom:10px">Рабочие кромки верхнего и нижнего гибочных ножей: R2 мм. Радиус ножей фиксирован и не меняется с толщиной листа.</small><label>Расчётная длина рабочего инструмента, мм<input id="toolLength" type="number" readonly value="796"></label><label>Торцевой зазор до короткого борта, мм<input id="toolClearance" type="number" min="0" max="100" step="0.5" value="2"></label><small id="toolHint"></small><div class="grid" style="margin-top:12px"><label>Ширина обработки, мм<select id="maxWidth"><option value="1250">1250 · ваш документ</option><option value="1500">1500 · другая версия</option></select></label><label>Высота гибки, мм<select id="maxHeight"><option value="200">200 · стандарт</option><option value="300">300 · опция</option></select></label></div><small>По всей рабочей длине установлены стандартные прижимные секции одного профиля, включая левый и правый торцы. Сборка выставляется до начала цикла. Автоматической смены нет.</small></div>
+<div class="panel"><h2>Цикл и обход инструмента</h2>
+<label>Режим выполнения<select id="runMode"><option value="bend">Гибка</option><option value="feed">Проверка подачи без гиба</option></select></label>
+<label>Траектория общей рамы<select id="knifePath" disabled><option value="arc">Малая радиусная дуга по скруглению</option></select></label><small>Центр рабочей кромки R2 идёт по дуге Rдвиж = Rнаруж детали + 2 мм. Подвод и отвод рамы — отдельные действия.</small>
+<label>Раскрытие и отвод перед поворотом<select id="avoidance"><option value="auto">Автоматический расчёт</option><option value="manual">Заданные позиции обхода</option></select></label>
+<label>Запас пространства, мм<input id="safetyMargin" type="number" min="1" max="200" value="20"></label>
+<div class="grid"><label>Центр детали при повороте, мм<input id="turnDistance" type="number" min="0" max="10000" value="900"></label><label>Раскрытие прижима, мм<input id="openHeight" type="number" min="0" max="2000" value="150"></label></div>
+<small id="avoidanceHint"></small>
+<details style="margin-top:12px"><summary>Пределы хода для самопроверки</summary><small>Вводятся по вашему станку. 0 — предел неизвестен. Это проверка модели, а не заводские допуски BDC3200.</small><div class="grid" style="margin-top:8px">
+<label>Ход подачи, мм<input id="feedLimit" type="number" min="0" max="10000" value="0"></label><label>Подъём прижима, мм<input id="clampLimit" type="number" min="0" max="2000" value="0"></label>
+<label>Отвод рамы, мм<input id="frameHorizontalLimit" type="number" min="0" max="2000" value="0"></label><label>Вертик. ход рамы, мм<input id="frameVerticalLimit" type="number" min="0" max="2000" value="0"></label></div></details>
+</div>
+<div class="panel"><h2>Проект</h2><div class="toolbar"><button id="save">Сохранить JSON</button><label class="file-label"><button type="button" id="loadBtn">Открыть JSON</button><input type="file" id="load" accept=".json,application/json"></label><button id="report">Отчёт / PDF</button></div><div id="fileError" class="error" role="status"></div></div>
+</aside>
+<section>
+<div class="notice">Геометрическая оценка. Прижим показан по схеме из PDF: стандартные секции одного профиля по всей рабочей длине, включая торцы. Контур обычного прижима взят из нижнего Word-чертежа без отдельной накладки 80 мм. Весь профиль установлен вертикально: корпус и крепление повернуты вместе. Подвижная рама уточнена по Word-схеме. Оставлена только часть монолитного стола непосредственно под прижимом, по его рабочей длине. Верхняя рабочая кромка зеркальная; нижний корпус прямой, без крепёжных вырезов прижима. Стол и линия гиба фиксированы. Деталь автоматически поворачивается нужной стороной к инструменту между гибами; камера не переключается. Оба гибочных ножа скруглены до R2 мм; наружный радиус детали равен толщине листа. Рама с двумя ножами сохраняет жёсткую форму; рабочая кромка идёт по малой радиусной дуге, связанной с Rнаруж детали и R2 ножа; размеры без обозначений, точный ход осей не подтверждены. Проверяются пересечения прямых полок с дном, другими полками и схемой прижима/стола во время гибки. Полная кинематика и столкновения при подаче и повороте ещё не подтверждены. В архиве ПО учтены отдельные действия, направления, обход, проверка подачи и самопроверка строк программы. Заводские параметры BDC2500/SL300 не перенесены в профиль BDC3200.</div>
+<div class="panel"><div class="view-head"><h2>Пошаговая гибка</h2><div class="toolbar"><button id="iso">Общий вид</button><button id="top">Сверху</button><button id="side">Сбоку</button><button id="fit">Вписать</button></div></div>
+<canvas id="view" aria-label="Трёхмерная симуляция четырёх бортов с управляемым видом"></canvas>
+<div class="playback-bar"><div class="progress-row"><button id="play" class="primary">▶ Пуск</button><button id="back" title="Предыдущее действие">←</button><input id="timeline" type="range" min="0" max="4" step="0.01" value="0" aria-label="Ход гибки"><button id="next" title="Следующее действие">→</button></div>
+<label class="single-step"><input id="singleStep" type="checkbox" style="width:auto;margin:0 6px 0 0">Пошаговый режим: пауза после каждого действия</label><div id="stage" class="stage" role="status"></div><div id="actionState" class="action-state"></div></div>
+<div class="view-controls" style="margin-top:10px"><button id="rotateMode" aria-pressed="true">Вращать</button><button id="panMode" aria-pressed="false">Перемещать</button><button id="zoomOut" aria-label="Уменьшить масштаб">−</button><button id="zoomIn" aria-label="Увеличить масштаб">+</button><label><input id="lockVertical" type="checkbox" checked>Вращение вокруг вертикали</label><label><input id="showMachine" type="checkbox" checked>Схема инструмента</label><label><input id="showFrame" type="checkbox" checked>Гибочная рама</label></div>
+<div class="hint">Режим «Вращать»: горизонтальное движение мыши — поворот вокруг вертикальной оси, вертикальное — наклон взгляда. Горизонт сохраняется, масштаб при вращении не прыгает. Снимите «Вращение вокруг вертикали» для свободного поворота. Режим «Перемещать», правая / средняя кнопка мыши или Shift + перетаскивание — сдвиг сцены. Колесо и кнопки +/− — масштаб. На телефоне: один палец — выбранный режим; два пальца — перемещение и масштаб; свободный поворот двумя пальцами доступен без привязки к вертикали. «Вписать» возвращает сцену в центр. Вид, масштаб и положение стола сохраняются весь цикл. Деталь сама отводится, поворачивается и подаёт очередную сторону к инструменту. Поворот происходит при раскрытом прижиме и отведённой раме; при гибке положение дна фиксировано. Ходы подачи и поворота показаны условно. Скрытые грани не отображаются. Серо-синие секции — стандартный прижим по всей длине. Обычный прижим восстановлен по нижнему Word-чертежу без отдельной накладки 80 мм. Весь прижим вертикальный, включая корпус и крепление всех секций. Верхняя рабочая кромка стола зеркально повторяет носик прижима. Нижний корпус стола прямой, с плоским основанием; крепёжные вырезы инструмента на него не перенесены. Стол монолитный по всей длине. Два гибочных ножа закреплены на общей раме; рама переносится без вращения. Во время гибки центр скругления ножа движется по дуге Rдвиж = Rнаруж детали + Rножа. Подвод и отвод показаны отдельно. Это геометрическая модель контакта, не заводская программа осей.</div>
+<div class="legend"><span><i class="dot" style="background:#bdcbdc"></i>Деталь</span><span><i class="dot" style="background:#ff953e"></i>Активный борт</span><span><i class="dot" style="background:#ef625c"></i>Пересечение геометрии</span><span><i class="dot" style="background:#536f86"></i>Стандартный прижим</span></div></div>
+<div class="panel"><div class="view-head"><h2>Программа действий</h2><button id="selfCheck">Самопроверка программы</button></div><div class="hint" style="margin-bottom:8px">0° — А у ножа; 90° — левая Г; 180° — противоположная Б; 270° — правая В. β — знаковый поворот от плоскости: +(180° − α) вверх, −(180° − α) вниз. Это геометрическое соглашение симуляции, не экспорт NLK/TZ. Стрелки под сценой переходят по отдельным действиям; номер строки открывает её середину.</div><div id="programWrap"><table id="programTable"><thead><tr><th>Шаг</th><th>Борт / направление</th><th>Действие</th><th>Параметр</th><th>Проверка</th></tr></thead><tbody id="program"></tbody></table></div><div id="selfCheckResult" class="hint" role="status"></div></div>
+<div class="two"><div class="panel"><h2>Сечение активного гиба</h2><canvas id="cross" aria-label="Сечение активной полки и зоны гиба"></canvas><div id="crossLabel" class="hint"></div><h2 style="margin-top:14px">Контакт и малая дуга ножа</h2><canvas id="contactView" style="width:100%;height:220px;display:block;background:#121a25;border-radius:8px" aria-label="Увеличенная зона гиба: радиус детали, радиус ножа и траектория его центра"></canvas><div id="contactLabel" class="hint"></div></div><div class="panel"><h2>Развёртка</h2><canvas id="flat" aria-label="Плоская развёртка с линиями гиба"></canvas><div id="blankLabel" class="hint"></div></div></div>
+<div class="panel"><h2>Проверка технологичности</h2><div id="status" class="conditional"></div><div class="sub">Проверяется автоматический порядок «короткие → длинные», включая промежуточные положения.</div><div id="metrics" class="stats"></div><div id="checks"></div></div>
+<div class="panel"><details><summary>Что проверяется и где остаются ограничения</summary><p>Поддерживаются цепочки до 8 гибов на каждом борту, включая разнонаправленные и возвратные полки. Нумерация и выполнение идут от края к дну: сначала гиб №1, затем №2 и далее. Локальные частичные гибы, обжим кромки, отверстия и произвольные угловые вырезы пока не моделируются.</p><ul><li>Толщина: 0,35–2 мм для стали, до 1,5 мм для нержавеющей стали 304, до 2,5 мм для алюминия.</li><li>Сначала гнутся две короткие стороны, затем две длинные. По вашему уточнению используется стандартная прижимная секция из правого варианта инструмента. Один профиль применяется к средним и обеим крайним секциям; сборка не меняется внутри цикла. Верхняя рабочая кромка стола повторяет зеркальное сечение носика обычного прижима. Ниже неё корпус прямой, без крепёжных вырезов инструмента, с плоским основанием; стол — единое тело по всей рабочей длине; стыки прижимных секций на стол не переносятся. Рабочая поверхность стола не выходит за линию гиба. Ширины отдельных секций в 3D показаны условно. Рабочая длина инструмента задана по длинной стороне с торцевыми зазорами и не меняется внутри цикла. Внутренний наклон коротких стенок сужает доступный проём. Если безопасный инструмент не покрывает длинный борт, проверка выдаёт препятствие.</li><li>Длина каждого гиба и габарит развёртки проверяются отдельно. Для прямоугольного габарита допускается разворот на 90°.</li><li>Проверка взаимного пересечения прямых бортов использует объёмные параллелепипеды с реальной толщиной и выборку движения через 1°. Проверяются также дно и показанные профили прижима/стола во время гибки. Зоны радиуса, угловые вырезы, гибочная рама, захват, подача и поворот не охвачены полной проверкой.</li><li>Отрицательные гибы видны в симуляции, но для них нельзя подтвердить доступность манипулятора; глубина вниз и пересечения прямых полок с моделью стола проверяются.</li><li>Углы 180° и близкие к плоскому состоянию показываются геометрически; допустимый диапазон реального BDC не подтверждён.</li><li>По заданному правилу Rнар = t, Rвн = Rнар − t = 0. Скругление ножей R2 мм задано независимо от толщины. K рассчитывается автоматически по средней линии геометрической модели: K = 0,5. Это геометрическое допущение, не экспериментальная поправка материала. Развёртка рассчитана по BA = β × π / 180 × (R + K × t). Перед производством припуски нужно откалибровать по пробным деталям; пружинение не рассчитывается.</li><li>Дуговая траектория — учебное движение общей жёсткой рамы в горизонтальной и вертикальной координатах сцены Y/Z. Координаты контроллера X/Y не приравнены к осям сцены. Контакт расположен непосредственно на наружном скруглении детали. Центр рабочей кромки ножа идёт по окружности Rдвиж = Rнаруж детали + Rножа; прежний условный рычаг 22 мм убран. Длина прямой полки не увеличивает эту дугу. Круглая рабочая кромка на схеме занимает 90°; дальнейшее взаимодействие при острых внутренних углах не подтверждено. Для технологической проверки требуется реальная траектория и профили ножей.</li><li>Время анимации условное. Показатель производителя 0,2 с/гиб не используется как время изготовления детали.</li></ul><p>Архив «Архив WinRAR (2).rar»: инструкция с обложкой BDC2500 и пакет SL300-PCx_V240504L13-SF. Использованы соглашения направлений, знаковые углы, отдельные операции поворота/подачи, дуговое движение ножей, обход и самопроверка. Заводские числа из SYS не приняты за параметры BDC3200. Перехват без размеров не анимируется. Прижим: PDF «方案 刀具示意图-1.pdf», схема секционной сборки, и ваши уточнения о стандартном профиле секций. Word «Спец.docx»: боковое сечение гибочной рамы и отдельный профиль обычного прижима, подтверждённый вами. Прямоугольная накладка слева с размером 80 мм и круглым отверстием — отдельная деталь; она исключена из основного контура и не моделируется как часть обычного прижима. Прижим восстановлен по изображению с опорными размерами 40 и 114 мм. Весь профиль повёрнут на 90° в вертикальное положение, корпус и крепление стоят над рабочей кромкой; детали без размеров приближённые. Гибочная рама ориентирована в рабочее положение и переносится без вращения как единое тело с двумя ножами; режим траектории выбирается отдельно. Полный осевой ход не указан. Автоматический отвод, поворот и подача детали показаны схематично; камера сохраняет выбранный вид, а инструмент остаётся у одной линии гиба. Профиль станка: загруженная презентация «комерческое панелегиб.pptx», каталог SENFENG (июль 2024). Данные другой версии: <a href="https://www.senfenglaser.com/product/press-down-arm-panel-bender-machine/" target="_blank" rel="noopener">SENFENG BDC</a>. Метод расчёта припуска: <a href="https://help.solidworks.com/2022/English/SolidWorks/sldworks/c_K_Factor.htm" target="_blank" rel="noopener">SOLIDWORKS</a>.</p></details></div>
+<div class="foot">BDC3200 · автономный исследовательский прототип · проверка геометрии не подтверждает изготовление детали на реальном станке.</div>
+</section></main><div id="printReport"></div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id), names=['А','Б','В','Г'], limits={steel:2,inox:1.5,aluminum:2.5};
+const defs={length:800,width:500,blankLength:1000,blankWidth:700,thickness:1,radius:0,kfactor:.5,gap:4,material:'steel',toolLength:796,toolClearance:2,maxWidth:1250,maxHeight:200,safetyMargin:20,turnDistance:900,openHeight:150,feedLimit:0,clampLimit:0,frameHorizontalLimit:0,frameVerticalLimit:0,runMode:'bend',knifePath:'arc',avoidance:'auto',order:'2,3,0,1',sides:[[{h:100,a:90,sign:1}],[{h:100,a:90,sign:1}],[{h:100,a:90,sign:1}],[{h:100,a:90,sign:1}]]};
+let model=structuredClone(defs), progress=0,playing=false,last=0,yaw=Math.PI-.62,pitch=.65,zoom=1,orientation=[0,0,0,1],panX=0,panY=0,viewMode='rotate',drag=null,dirty=true,lastReport=null,valid=true,playStop=4,programRows=[],programIssues=[],programHighlight=-1;
+const ranges={blankLength:[10,5000],blankWidth:[10,5000],thickness:[.1,10],gap:[0,100],toolClearance:[0,100],safetyMargin:[1,200],turnDistance:[0,10000],openHeight:[0,2000],feedLimit:[0,10000],clampLimit:[0,2000],frameHorizontalLimit:[0,2000],frameVerticalLimit:[0,2000]};
+function finite(x,min,max){return Number.isFinite(x)&&x>=min&&x<=max}
+function inputNumber(id){const raw=$(id).value.trim();return raw===''?NaN:Number(raw);}
+const foldNumber=(side,fold,m=model)=>m.sides[side].length-fold;
+const foldLabel=(side,fold)=>side===4?'Дно':names[side]+foldNumber(side,fold);
+let editSides=structuredClone(defs.sides),projectionFit=null;
+function renderSideInputs(){
+ $('sides').innerHTML=editSides.map((side,i)=>`<div class="side-card"><div class="view-head"><strong>Борт ${names[i]} · ${directionDegrees[i]}°</strong><button data-add="${i}" ${side.length>=8?'disabled':''}>+ Добавить гиб у края</button></div><table class="fold-table"><thead><tr><th>Гиб</th><th>Полка, мм</th><th>Внутр. угол</th><th>Направл.</th><th></th></tr></thead><tbody>${side.map((f,j)=>({f,j})).reverse().map(({f,j})=>`<tr><td>${side.length-j}</td><td><input id="fh_${i}_${j}" type="number" min="0" max="1000" value="${f.h}" aria-label="Полка ${names[i]}${side.length-j}"></td><td><input id="fa_${i}_${j}" type="number" min="5" max="180" value="${f.a}" aria-label="Угол ${names[i]}${side.length-j}"></td><td><select id="fs_${i}_${j}" aria-label="Направление ${names[i]}${side.length-j}"><option value="1" ${f.sign===1?'selected':''}>↑</option><option value="-1" ${f.sign===-1?'selected':''}>↓</option></select></td><td><button data-remove="${i}:${j}" ${side.length===1?'disabled':''} aria-label="Удалить гиб ${names[i]}${side.length-j}">×</button></td></tr>`).join('')}</tbody></table></div>`).join('');
+ // Explicit values also support restored projects without relying on selected markup.
+ editSides.forEach((side,i)=>side.forEach((f,j)=>{$(`fs_${i}_${j}`).value=f.sign;}));
+}
+function validate(m){return normalizeProject(m);}
+function setupLabels(){
+ const setup=toolSetup(model),order=model.order.split(',').map(Number);$('order').value=order.map(i=>names[i]).join(' → ');
+ $('orderHint').textContent=`Сначала короткие стороны, затем длинные. На каждой стороне — от внешнего гиба к внутреннему: ${foldSequence().map(o=>`${foldLabel(o.side,o.fold)}`).join(' → ')}.`;
+ $('toolLength').value=Number(setup.length.toFixed(3));$('toolHint').textContent=`Одна рабочая длина ${fmt(setup.length)} мм на весь цикл. По длинной части дна ${fmt(setup.nominal)} мм; торцевые зазоры ≥ ${model.toolClearance} мм. Учтён возврат полок коротких бортов внутрь. Стандартные секции по всей длине.`;
+ $('partInfo').textContent=`Заготовка ${fmt(model.blankLength)} × ${fmt(model.blankWidth)} мм. ${cycleCount()} линий гиба; геометрический радиус Rнаруж = t; припуски по средней линии требуют производственной калибровки.`;
+ $('timeline').max=cycleCount();
+}
+function read(){
+ const m={...model};for(const k of Object.keys(ranges))m[k]=inputNumber(k);for(const k of ['maxWidth','maxHeight'])m[k]=inputNumber(k);for(const k of ['material','runMode','avoidance'])m[k]=$(k).value;
+ editSides=editSides.map((side,i)=>side.map((_,j)=>({h:inputNumber(`fh_${i}_${j}`),a:inputNumber(`fa_${i}_${j}`),sign:inputNumber(`fs_${i}_${j}`)})));m.sides=editSides;
+ playing=false;$('play').textContent='▶ Пуск';
+ try{model=validate(m);valid=true;progress=0;$('timeline').value=0;for(const id of ['save','report','play'])$(id).disabled=false;$('fileError').textContent='';$('partError').textContent='';setupLabels();dirty=true;check();}
+ catch(e){valid=false;for(const id of ['save','report','play'])$(id).disabled=true;$('partError').textContent=e.message;$('fileError').textContent=e.message;$('status').textContent='Исправьте параметры заготовки и гибов';$('status').className='blocked';$('stage').textContent='Показана последняя корректная геометрия';}
+}
+function fill(){
+ playing=false;valid=true;$('play').textContent='▶ Пуск';for(const id of ['save','report','play'])$(id).disabled=false;
+ for(const k of Object.keys(ranges))$(k).value=model[k];for(const k of ['material','maxWidth','maxHeight','runMode','avoidance'])$(k).value=model[k];
+ editSides=structuredClone(model.sides);renderSideInputs();progress=0;$('timeline').value=0;$('partError').textContent='';setupLabels();dirty=true;check();
+}
+
+const add=(a,b)=>a.map((v,i)=>v+b[i]),mul=(a,b)=>a.map(v=>v*b),dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],len=a=>Math.hypot(...a),unit=a=>mul(a,1/len(a)),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function overlap(a,b){if(a.half.some(v=>v<=0)||b.half.some(v=>v<=0))return false;const axes=[...a.axes,...b.axes];for(const u of a.axes)for(const v of b.axes){const c=cross(u,v);if(len(c)>1e-7)axes.push(unit(c))}let delta=add(b.center,mul(a.center,-1));for(const n of axes){const ra=a.half.reduce((s,v,i)=>s+v*Math.abs(dot(n,a.axes[i])),0),rb=b.half.reduce((s,v,i)=>s+v*Math.abs(dot(n,b.axes[i])),0);if(Math.abs(dot(delta,n))>=ra+rb-1e-5)return false}return true}
+function check(){
+ const checks=[],push=(state,title,text)=>checks.push({state,title,text}),[bx,by]=blankSize(),max=limits[model.material],setup=toolSetup(model),motion=motionAnalysis(),seq=foldSequence();
+ push(model.thickness>=.35&&model.thickness<=max?'ok':'fail','Толщина',`${model.thickness} мм; диапазон выбранного материала: 0,35–${max} мм.`);
+ push(((bx<=3200&&by<=model.maxWidth)||(by<=3200&&bx<=model.maxWidth))?'ok':'fail','Габарит заготовки',`${fmt(bx)} × ${fmt(by)} мм; поле 3200 × ${model.maxWidth} мм. Поворот на 90° учитывается.`);
+ push('warn','Размеры и припуски',`Дно ${fmt(model.length)} × ${fmt(model.width)} мм рассчитано из размеров заготовки за вычетом всех полок и припусков. K = ${fmt(model.kfactor)} автоматически по средней линии геометрической модели; для производства требуется калибровка по пробным деталям.`);
+ const bad=seq.filter(o=>model.sides[o.side][o.fold].a<180&&sideInfo(o.side).span-2*model.gap>model.toolLength+1e-7);
+ push(model.toolLength>0&&model.toolLength<=3200&&!bad.length?'ok':'fail','Длина гиба / инструмент',bad.length?`Безопасный инструмент ${fmt(model.toolLength)} мм не покрывает ${bad.map(o=>foldLabel(o.side,o.fold)).join(', ')}.`:`Рабочая длина ${fmt(model.toolLength)} мм; допустимо до 3200 мм. Длина инструмента фиксирована.`);
+ push(setup.leftGap>=model.toolClearance-1e-7&&setup.rightGap>=model.toolClearance-1e-7&&model.toolLength>0?'ok':'fail','Торцы инструмента / короткие борта',`Зазоры ${fmt(setup.leftGap)} / ${fmt(setup.rightGap)} мм. Проём рассчитан по всей цепочке полок, включая возвраты внутрь.`);
+ push('ok','Порядок гибки',seq.map(o=>`${foldLabel(o.side,o.fold)}`).join(' → ')+'. Короткие стороны первыми; внешние линии до внутренних.');
+ const tooHigh=names.filter((_,i)=>Math.max(motion.heights[i],motion.depths[i])>model.maxHeight);
+ push(tooHigh.length?'fail':'ok','Высота / глубина сформированных бортов',tooHigh.length?`Габарит вверх или вниз больше ${model.maxHeight} мм: ${tooHigh.join(', ')}.`:`Габариты вверх и вниз в промежуточных положениях ≤ ${model.maxHeight} мм. Доступное пространство под столом отдельно не подтверждено.`);
+ push(model.gap*2>=Math.min(model.length,model.width)?'fail':'warn','Угловые вырезы',`Зазор ${model.gap} мм. Угловые вырезы многогибной детали показаны схематично; их точные контуры требуют проверки.`);
+ push(motion.hits.length?'fail':'ok','Пересечения прямых полок и дна',motion.hits.length?motion.hits.map(x=>`${foldLabel(x.pair[0],x.folds[0])}/${foldLabel(x.pair[1],x.folds[1])}: гиб ${foldLabel(x.operation,x.fold)}, ${fmt(x.degrees)}°`).join('; '):'Прямые участки и дно проверены с толщиной листа и шагом ≤ 1°. Касание соседних участков в общей зоне гиба допускается; радиусные зоны исключены. Это выборочная, не непрерывная проверка.');
+ push(motion.toolHits.length?'fail':'warn','Прямые полки / модель прижима и стола',motion.toolHits.length?motion.toolHits.map(x=>`${foldLabel(x.side,x.partFold)} → ${x.obstacle}: гиб ${foldLabel(x.operation,x.fold)}, ${fmt(x.degrees)}°`).join('; '):'Пересечений прямых участков с показанными профилями прижима и стола при формовании не найдено. Радиусы, ножи/рама, подача, раскрытие, поворот и захват здесь не проверяются; заводская геометрия неполная.');
+ push('warn','Полная проверка инструмента','Радиусы R2 и малая дуга контакта сохранены. Для сложных цепочек полок требуется проверка объёмного прижима, рамы, стола, захвата и извлечения по заводским размерам; эти столкновения ещё не подтверждены.');
+ push('ok','Контур обычного прижима','Стандартный профиль из основного Word-чертежа стоит вертикально по всей длине. Отдельная накладка 80 мм не включена. ');
+ push('ok','Форма края стола','Монолитный неподвижный стол только под прижимом. Верхняя кромка зеркальная; нижний корпус прямой с плоским основанием. Рабочая поверхность заканчивается на линии гиба.');
+ push('warn','Позиционирование и технологичность','Деталь сама подаёт каждую линию к ножу. При смене стороны — отвод и поворот; при следующем гибе той же стороны — только подача. Камера сохраняется. Несколько гибов моделируются геометрически; доступность реального инструмента для возвратов требует подтверждения.');
+ renderProgram(motion.hits);const failures=programIssues.filter(x=>x.state==='fail');push(failures.length?'fail':'ok','Самопроверка программы',failures.length?failures.map(x=>`Шаг ${x.step}, ${x.code}: ${x.text}`).join(' '):'В проверенных параметрах программы препятствий не найдено.');
+ const failed=checks.some(c=>c.state==='fail');$('status').textContent=failed?'Есть препятствия в проверенных параметрах':'Проверенные параметры проходят; технологичность не подтверждена';$('status').className=failed?'blocked':'conditional';
+ $('checks').innerHTML=checks.map(c=>`<div class="check ${c.state}"><strong>${c.state==='ok'?'✓':c.state==='fail'?'×':'?'} ${c.title}</strong><small>${c.text}</small></div>`).join('');
+ $('metrics').innerHTML=`<span>Заготовка<b>${fmt(bx)} × ${fmt(by)} мм</b></span><span>Габарит ↑ / ↓<b>${fmt(Math.max(...motion.heights))} / ${fmt(Math.max(...motion.depths))} мм</b></span><span>Линии гиба<b>${seq.length}</b></span>`;
+ lastReport={checks,failed,blank:[bx,by],bottom:[model.length,model.width],kfactor:model.kfactor,heights:motion.heights,depths:motion.depths,tool:setup,order:model.order.split(',').map(Number),program:structuredClone(programRows),diagnostics:structuredClone(programIssues),runMode:model.runMode,knifePath:model.knifePath};drawFlat();if(valid)updateProgramState();
+}
+function programDiagnostics(m,rows,hits=[]){
+ const out=[],setup=handlingSetup(m),seq=foldSequence(m),issue=(row,code,text,state='fail')=>out.push({step:row.number,side:row.side,fold:row.fold,code,text,state});
+ if(m.thickness<.35||m.thickness>limits[m.material])issue(rows[0],'SIM-STOCK','Толщина вне диапазона выбранного материала.');
+ const [bx,by]=blankSize();if(!((bx<=3200&&by<=m.maxWidth)||(by<=3200&&bx<=m.maxWidth)))issue(rows[0],'SIM-BLANK','Заготовка не помещается в рабочее поле.');
+ for(const row of rows){
+  const op=seq[row.cycle],f=m.sides[row.side][row.fold];
+  if(['turn','feed'].includes(row.kind)&&setup.openHeight<setup.requiredOpenHeight-1e-7)issue(row,'SIM-OPEN','Заданного раскрытия недостаточно для цепочки полок с запасом.');
+  if(row.kind==='turn'&&setup.turnY<setup.requiredTurnY-1e-7)issue(row,'SIM-TURN','Недостаточно пространства для кругового габарита заготовки.');
+  if(['feed','retract'].includes(row.kind)){
+   const same=row.kind==='feed'&&row.cycle>0&&seq[row.cycle-1].side===row.side,stroke=same?Math.abs(op.workY-seq[row.cycle-1].workY):Math.abs(setup.turnY-op.workY);
+   if(m.feedLimit>0&&stroke>m.feedLimit+1e-7)issue(row,'SIM-U',`Подача ${fmt(stroke)} мм превышает ${fmt(m.feedLimit)} мм.`);
+  }
+  if(['clamp','turn','position'].includes(row.kind)&&m.clampLimit>0&&setup.openHeight>m.clampLimit)issue(row,'SIM-CLAMP','Подъём прижима превышает заданный предел.');
+  if(row.kind==='bend'&&f.a<180){
+   if(m.toolLength<=0||m.toolLength>3200||sideInfo(row.side).span-2*m.gap>m.toolLength+1e-7)issue(row,'SIM-SPAN','Инструмент не покрывает линию гиба либо его длина превышает 3200 мм.');
+   if(Math.max(wallHeight(row.side),motionAnalysis().depths[row.side])>m.maxHeight)issue(row,'SIM-HEIGHT','Габарит цепочки полок вверх или вниз превышает предел профиля станка.');
+   let x=0,z=0;for(let i=0;i<=90;i++){const b=benderGeometry(m,row.start+(row.end-row.start)*i/90);x=Math.max(x,Math.abs(b.yOffset));z=Math.max(z,Math.abs(b.zOffset));}
+   if(m.frameHorizontalLimit>0&&x>m.frameHorizontalLimit)issue(row,'SIM-KX','Горизонтальное смещение рамы превышает введённый предел.');
+   if(m.frameVerticalLimit>0&&z>m.frameVerticalLimit)issue(row,'SIM-KZ','Вертикальное смещение рамы превышает введённый предел.');
+   if(f.a<90)issue(row,'SIM-ARC90','Круглая кромка ножа занимает 90°; дальнейшее взаимодействие при остром внутреннем угле не подтверждено.','warn');
+   if(f.sign<0)issue(row,'SIM-DOWN','Для гиба вниз требуется объёмная проверка стола и захвата.','warn');
+   if(row.fold>0)issue(row,'SIM-MULTI','Дополнительная линия: геометрия и подача рассчитаны; контакт прижима с соседними полками требует проверки.','warn');
+  }
+ }
+ for(const h of hits){const row=rows.find(r=>r.side===h.operation&&r.fold===h.fold&&r.kind==='bend');if(row)issue(row,'SIM-WALL',`Пересечение ${foldLabel(h.pair[0],h.folds[0])}/${foldLabel(h.pair[1],h.folds[1])} при ${fmt(h.degrees)}°.`);}
+ for(const h of motionAnalysis().toolHits){const row=rows.find(r=>r.side===h.operation&&r.fold===h.fold&&r.kind==='bend');if(row)issue(row,'SIM-TOOL',`${foldLabel(h.side,h.partFold)} пересекает ${h.obstacle} в геометрической модели при ${fmt(h.degrees)}°.`);}
+ return out;
+}
+function renderProgram(hits){
+ programRows=cycleProgram(model);programIssues=programDiagnostics(model,programRows,hits);programHighlight=-1;
+ $('program').innerHTML=programRows.map(row=>{const issues=programIssues.filter(x=>x.step===row.number);return `<tr id="programRow${row.number}" class="${issues.some(x=>x.state==='fail')?'problem':''}"><td><button data-action="${row.number}">${row.number}</button></td><td>${foldLabel(row.side,row.fold)} / ${row.direction}°</td><td>${row.label}</td><td>${row.parameter}</td><td>${issues.map(x=>`${x.code}: ${x.text}`).join('<br>')||'—'}</td></tr>`;}).join('');
+ for(const id of ['turnDistance','openHeight'])$(id).disabled=model.avoidance==='auto';const setup=handlingSetup(model);
+ $('avoidanceHint').textContent=`Центр поворота ${fmt(setup.turnY)} мм; раскрытие ${fmt(setup.openHeight)} мм. Подача рассчитана отдельно для каждой линии гиба.`;
+ $('selfCheckResult').textContent='Коды SIM относятся к геометрической модели. Полная заводская проверка ещё не реализована.';
+}
+function actionAt(value){return programRows.find(r=>value>=r.start-1e-9&&value<r.end-1e-9)||programRows.at(-1);}
+function actionBoundary(value,forward=true){const b=[0,...programRows.map(r=>r.end)];return forward?(b.find(x=>x>value+1e-8)??cycleCount()):([...b].reverse().find(x=>x<value-1e-8)??0);}
+function goTo(value){progress=clamp(value,0,cycleCount());playing=false;$('play').textContent='▶ Пуск';$('timeline').value=progress;dirty=true;}
+function updateProgramState(){
+ const row=actionAt(progress);if(!row)return;
+ if(programHighlight!==row.number){for(const r of programRows)$(`programRow${r.number}`).className=(r.number===row.number?'current ':'')+(programIssues.some(x=>x.step===r.number&&x.state==='fail')?'problem':'');programHighlight=row.number;}
+ const b=benderGeometry(model,progress),f=model.sides[row.side][row.fold],beta=foldAnglesAt(progress)[row.side][row.fold]*f.sign*180/Math.PI;
+ $('stage').textContent=progress>=cycleCount()?'Цикл завершён':`Шаг ${row.number} / ${programRows.length} · ${foldLabel(row.side,row.fold)} · ${row.label}`;
+ $('actionState').textContent=`${model.runMode==='feed'?'Подача без гиба · ':''}β ${fmt(beta)}° · раскрытие ${fmt(clampGap(model,progress))} мм · Rдвиж ${fmt(b.trajectory.radius)} мм · стандартный прижим`;
+}
+
+const fmt=x=>Number(x.toFixed(1)).toLocaleString('ru-RU');
+function canvas(id){const c=$(id),r=c.getBoundingClientRect(),d=Math.max(.25,Math.min(1.5,window.devicePixelRatio||1,1400/Math.max(1,r.width)));if(c.width!==Math.round(r.width*d)||c.height!==Math.round(r.height*d)){c.width=Math.round(r.width*d);c.height=Math.round(r.height*d)}const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,r.width,r.height);return [ctx,r.width,r.height]}
+let faceList=[],edgeList=[],lastRaster=null,lastFit=null;
+function face(points,color,edge='#64768b'){faceList.push({points,color});if(edge)for(let i=0;i<points.length;i++)edgeList.push({a:points[i],b:points[(i+1)%points.length],color:edge});}
+function box(center,axes,half,color,edge='#64768b'){
+ const pts=[];for(let z=-1;z<=1;z+=2)for(let y=-1;y<=1;y+=2)for(let x=-1;x<=1;x+=2)pts.push(add(center,add(mul(axes[0],half[0]*x),add(mul(axes[1],half[1]*y),mul(axes[2],half[2]*z)))));
+ for(const idx of [[0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]])face(idx.map(i=>pts[i]),color,edge);
+}
+// The table mirrors only the working nose of the clamp; its lower body is straight.
+// Cross-section silhouettes are schematic. Stock segment widths are unconfirmed.
+// Traced from the separate clamp drawing in Спец.docx; mounting details are approximate.
+// Local y points into the panel, local z goes up from the contact nose.
+// The 80 mm front plate with the circular hole is a separate part, per user clarification.
+// It is not part of the standard clamp contour and must not move the contact datum.
+const CLAMP_TRACE=[[236,61],[260,61],[374,331],[1171,331],[1185,242],[1250,129],[1445,129],[1465,151],[1465,205],[1410,205],[1410,183],[1340,183],[1340,331],[1333,334],[1333,403],[1340,405],[1340,566],[1410,566],[1410,547],[1465,547],[1465,597],[1445,619],[463,619],[421,574],[248,574],[236,560]];
+const CLAMP_DRAWING=CLAMP_TRACE.map(([y,z])=>[(y-236)*40/(421-236),(z-61)*114/(574-61)]);
+// Rotate the entire cross-section 90 degrees, including its body and mounting end.
+// Position the lowest contact face on z = 0, with its front edge at the fold line y = 0.
+const CLAMP_BASE_Y=Math.min(...CLAMP_DRAWING.map(p=>p[0]));
+const CLAMP_CONTACT_Y=Math.min(...CLAMP_DRAWING.filter(p=>Math.abs(p[0]-CLAMP_BASE_Y)<1e-8).map(p=>p[1]));
+const CLAMP_PROFILE=CLAMP_DRAWING.map(([y,z])=>[z-CLAMP_CONTACT_Y,y-CLAMP_BASE_Y]);
+const CLAMP_HEIGHT=Math.max(...CLAMP_PROFILE.map(p=>p[1]));
+const autoK=(thickness,inner=0)=>(((inner+thickness)+inner)/2-inner)/thickness;
+const foldAngle=f=>(180-f.a)*Math.PI/180;
+function bendAllowance(m,f){return foldAngle(f)*(m.radius+m.kfactor*m.thickness);}
+function sideExtension(m,i){return m.sides[i].reduce((sum,f)=>sum+f.h+bendAllowance(m,f),0);}
+function normalizeProject(input){
+ if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Некорректный проект.');
+ const m=structuredClone(defs);for(const key of Object.keys(defs))if(Object.hasOwn(input,key))m[key]=structuredClone(input[key]);m.radius=0;
+ m.kfactor=autoK(m.thickness,m.radius);m.knifePath='arc';
+ if(!Array.isArray(input.sides)||input.sides.length!==4)throw Error('Нужно четыре борта.');
+ m.sides=input.sides.map(s=>Array.isArray(s)?s:([s]));
+ for(const side of m.sides){
+  if(!side.length||side.length>8)throw Error('На каждом борту нужно от 1 до 8 участков.');
+  for(const f of side)if(!f||!finite(f.h,0,1000)||!finite(f.a,5,180)||![1,-1].includes(f.sign))throw Error('Проверьте полки, углы и направления гибов.');
+ }
+ m.sides=m.sides.map(side=>side.map(({h,a,sign})=>({h,a,sign})));
+ // Older projects specified the bottom. Convert them once to stock dimensions.
+ if(!Object.hasOwn(input,'blankLength'))m.blankLength=input.length+sideExtension(m,2)+sideExtension(m,3);
+ if(!Object.hasOwn(input,'blankWidth'))m.blankWidth=input.width+sideExtension(m,0)+sideExtension(m,1);
+ for(const [k,r]of Object.entries(ranges))if(!finite(m[k],...r))throw Error('Некорректное значение: '+k);
+ if(!Object.hasOwn(limits,m.material)||![1250,1500].includes(m.maxWidth)||![200,300].includes(m.maxHeight)||!['bend','feed'].includes(m.runMode)||!['auto','manual'].includes(m.avoidance))throw Error('Некорректный профиль станка.');
+ m.length=m.blankLength-sideExtension(m,2)-sideExtension(m,3);m.width=m.blankWidth-sideExtension(m,0)-sideExtension(m,1);
+ if(m.length<10||m.width<10)throw Error('Полки и припуски занимают всю заготовку. Увеличьте длину/ширину или уменьшите полки; для дна нужно ≥ 10 мм.');
+ m.order=(m.length>=m.width?[2,3,0,1]:[0,1,2,3]).join(',');m.toolLength=toolSetup(m).length;return m;
+}
+function profile2D(m,side,angles){
+ const nodes=[{p:[0,0],normal:[0,1],heading:0,fold:0}],bends=[];let p=[0,0],heading=0;
+ const R=m.radius+m.thickness/2;
+ for(let j=0;j<m.sides[side].length;j++){
+  const f=m.sides[side][j],phi=Math.max(0,angles?.[j]??0),sg=f.sign,start=[...p],before=heading,steps=phi>1e-8?Math.max(2,Math.ceil(phi/(Math.PI/60))):0;
+  const tangent=[Math.cos(before),Math.sin(before)],normal=[-Math.sin(before),Math.cos(before)];
+  const center=[start[0]+sg*R*normal[0],start[1]+sg*R*normal[1]];
+  for(let k=1;k<=steps;k++){
+   const u=phi*k/steps,turn=before+sg*u;
+   p=[start[0]+R*Math.sin(u)*tangent[0]+sg*R*(1-Math.cos(u))*normal[0],start[1]+R*Math.sin(u)*tangent[1]+sg*R*(1-Math.cos(u))*normal[1]];
+   nodes.push({p:[...p],normal:[-Math.sin(turn),Math.cos(turn)],heading:turn,fold:j});
+  }
+  const arcEnd=[...p];heading=before+sg*phi;
+  // Keep the neutral developed length constant during progressive bending.
+  const remaining=Math.max(0,bendAllowance(m,f)-R*phi),straight=f.h+remaining;
+  p=[p[0]+straight*Math.cos(heading),p[1]+straight*Math.sin(heading)];
+  nodes.push({p:[...p],normal:[-Math.sin(heading),Math.cos(heading)],heading,fold:j});
+  bends.push({start,center,before,heading,arcEnd,end:[...p],straight,angle:phi});
+ }
+ return {nodes,bends,end:p};
+}
+function finalFoldAngles(m){return m.sides.map(side=>side.map(f=>foldAngle(f)));}
+function emptyFoldAngles(m){return m.sides.map(side=>side.map(()=>0));}
+function foldSequence(m=model){
+ const result=[];for(const side of m.order.split(',').map(Number))for(let fold=m.sides[side].length-1;fold>=0;fold--){
+  const flatOffset=m.sides[side].slice(0,fold).reduce((sum,f)=>sum+f.h+bendAllowance(m,f),0);
+  result.push({side,fold,flatOffset,workY:(side<2?m.width:m.length)/2+flatOffset});
+ }return result;
+}
+function cycleCount(m=model){return foldSequence(m).length;}
+function activeOperation(value=progress,m=model){return foldSequence(m)[Math.min(cycleCount(m)-1,Math.max(0,Math.floor(value)))];}
+function foldAnglesAt(p){
+ const out=emptyFoldAngles(model);if(model.runMode==='feed')return out;
+ foldSequence().forEach((op,k)=>{out[op.side][op.fold]=foldAngle(model.sides[op.side][op.fold])*clamp((p-k-.32)/.53,0,1);});return out;
+}
+function anglesAt(p){return foldAnglesAt(p).map(side=>side[0]);}
+function activeAt(p){return activeOperation(p).side;}
+const target=(i,j=0)=>foldAngle(model.sides[i][j]);
+function sideInfo(i,m=model){const L=m.length,W=m.width;return [{p:[0,-W/2,0],o:[0,-1,0],axis:[1,0,0],span:L},{p:[0,W/2,0],o:[0,1,0],axis:[1,0,0],span:L},{p:[L/2,0,0],o:[1,0,0],axis:[0,1,0],span:W},{p:[-L/2,0,0],o:[-1,0,0],axis:[0,1,0],span:W}][i];}
+function sheetPoint(i,node,v=0,s=0){const inf=sideInfo(i),p=[node.p[0]+node.normal[0]*v,node.p[1]+node.normal[1]*v];return add(add(inf.p,mul(inf.o,p[0])),add(mul(inf.axis,s),[0,0,p[1]]));}
+function at(i,phi,d,v=0,s=0){const f=model.sides[i][0],R=model.radius+model.thickness/2,heading=f.sign*phi;return sheetPoint(i,{p:[R*Math.sin(phi)+d*Math.cos(phi),f.sign*(R*(1-Math.cos(phi))+d*Math.sin(phi))],normal:[-Math.sin(heading),Math.cos(heading)]},v,s);}
+function toolSetup(m){
+ const nominal=Math.max(m.length,m.width),short=m.length>=m.width?[2,3]:[1,0],clearance=m.toolClearance??2;
+ const inward=i=>{const profile=profile2D(m,i,m.sides[i].map(f=>foldAngle(f)));return Math.min(0,...profile.nodes.flatMap(n=>[-m.thickness/2,m.thickness/2].map(v=>n.p[0]+n.normal[0]*v)));};
+ const left=-nominal/2-inward(short[1]),right=nominal/2+inward(short[0]),length=Math.max(0,2*(Math.min(-left,right)-clearance)),required=Math.max(0,nominal-2*m.gap);
+ return {nominal,left,right,length,required,clearance,leftGap:-length/2-left,rightGap:right-length/2};
+}
+function allowance(i,j=0){return bendAllowance(model,model.sides[i][j]);}
+function blankSize(){return [model.blankLength,model.blankWidth];}
+function boxesForAngles(angles,profiles=null){
+ const all=[];for(let i=0;i<4;i++){
+  const inf=sideInfo(i),p=profiles?.[i]??profile2D(model,i,angles[i]);
+  p.bends.forEach((b,j)=>{
+   if(b.straight<=0)return;
+   const centerNode={p:[(b.arcEnd[0]+b.end[0])/2,(b.arcEnd[1]+b.end[1])/2],normal:[-Math.sin(b.heading),Math.cos(b.heading)]};
+   const axes=[inf.axis,add(mul(inf.o,Math.cos(b.heading)),[0,0,Math.sin(b.heading)]),add(mul(inf.o,-Math.sin(b.heading)),[0,0,Math.cos(b.heading)])],half=[Math.max(0,inf.span/2-model.gap),b.straight/2,model.thickness/2],center=sheetPoint(i,centerNode),extent=[0,1,2].map(k=>half.reduce((s,v,n)=>s+Math.abs(axes[n][k])*v,0));
+   all.push({side:i,fold:j,center,axes,half,min:center.map((x,k)=>x-extent[k]),max:center.map((x,k)=>x+extent[k])});
+  });
+ }return all;
+}
+function wallConflicts(angles,preparedBoxes=null){
+ if(!Array.isArray(angles[0]))angles=angles.map((x,i)=>model.sides[i].map((_,j)=>j===0?x:0));
+ const boxes=preparedBoxes??boxesForAngles(angles),pairs=[];
+ const bottom={center:[0,0,0],axes:[[1,0,0],[0,1,0],[0,0,1]],half:[model.length/2,model.width/2,model.thickness/2]};
+ for(const b of boxes)if(overlap(b,bottom))pairs.push({pair:[b.side,4],folds:[b.fold,-1]});
+ for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){
+  const a=boxes[i],b=boxes[j];if(a.side===b.side&&Math.abs(a.fold-b.fold)<=1)continue;
+  if(a.min.some((v,k)=>v>=b.max[k]-1e-6)||b.min.some((v,k)=>v>=a.max[k]-1e-6))continue;
+  if(overlap(a,b))pairs.push({pair:[a.side,b.side],folds:[a.fold,b.fold]});
+ }return pairs;
+}
+function conflicts(angles){return wallConflicts(angles).map(x=>x.pair);}
+let obstacleCache=null;
+function modelObstacles(m){
+ const key=JSON.stringify([m.toolLength,m.thickness]);if(obstacleCache?.key===key)return obstacleCache.prisms;
+ const table=tableGeometry(m),prisms=[];
+ for(const [name,profile,lift]of [['прижим',CLAMP_PROFILE,m.thickness/2],['стол',table.profile,table.contactZ]]){
+  for(const ids of profileTriangles(profile)){
+   const tri=ids.map(i=>[profile[i][0],profile[i][1]+lift]),start=-m.toolLength/2,end=m.toolLength/2;
+   const edges=tri.map((a,i)=>[0,tri[(i+1)%3][0]-a[0],tri[(i+1)%3][1]-a[1]]);
+   prisms.push({name,tri,start,end,edges,min:[start,Math.min(...tri.map(p=>p[0])),Math.min(...tri.map(p=>p[1]))],max:[end,Math.max(...tri.map(p=>p[0])),Math.max(...tri.map(p=>p[1]))]});
+  }
+ }
+ obstacleCache={key,prisms};return prisms;
+}
+function overlapPrism(box,prism){
+ if(prism.end<=prism.start||box.half.some(x=>x<=0))return false;
+ const extent=box.extent??[0,1,2].map(k=>box.half.reduce((sum,v,i)=>sum+v*Math.abs(box.axes[i][k]),0));
+ if(extent.some((v,k)=>box.center[k]+v<=prism.min[k]+1e-6||box.center[k]-v>=prism.max[k]-1e-6))return false;
+ const xaxis=[1,0,0],axes=[...box.axes,xaxis,...prism.edges.map(e=>[0,-e[2],e[1]])];
+ for(const a of box.axes)for(const e of [xaxis,...prism.edges])axes.push(cross(a,e));
+ for(const a of axes){const norm=len(a);if(norm<1e-8)continue;const n=mul(a,1/norm),center=dot(box.center,n),radius=box.half.reduce((sum,v,i)=>sum+v*Math.abs(dot(box.axes[i],n)),0);
+  const yz=prism.tri.map(p=>p[0]*n[1]+p[1]*n[2]),xs=[prism.start*n[0],prism.end*n[0]],low=Math.min(...yz)+Math.min(...xs),high=Math.max(...yz)+Math.max(...xs);
+  if(center+radius<=low+1e-6||center-radius>=high-1e-6)return false;
+ }
+ return true;
+}
+function machineConflicts(m,op,angles,preparedBoxes=null){
+ const rotation=[0,Math.PI,-Math.PI/2,Math.PI/2][op.side],center=[0,op.workY,0],hits=[],prisms=modelObstacles(m);
+ for(const b of preparedBoxes??boxesForAngles(angles)){
+  const world={...b,center:add(turn(b.center,rotation),center),axes:b.axes.map(a=>turn(a,rotation))};
+  world.extent=[0,1,2].map(k=>world.half.reduce((sum,v,i)=>sum+v*Math.abs(world.axes[i][k]),0));
+  for(const name of ['прижим','стол'])if(prisms.some(p=>p.name===name&&overlapPrism(world,p)))hits.push({side:b.side,fold:b.fold,obstacle:name});
+ }
+ return hits;
+}
+let analysisCache=null;
+function motionAnalysis(){
+ const key=JSON.stringify(model);if(analysisCache?.key===key)return analysisCache;
+ const angles=emptyFoldAngles(model),hits=new Map(),toolHits=new Map(),heights=[0,0,0,0],depths=[0,0,0,0];let minZ=-model.thickness/2,maxZ=model.thickness/2;
+ const inspect=op=>{
+  const profiles=angles.map((a,i)=>profile2D(model,i,a)),boxes=boxesForAngles(angles,profiles);
+  for(let i=0;i<4;i++)for(const n of profiles[i].nodes)for(const v of [-model.thickness/2,model.thickness/2]){const z=n.p[1]+n.normal[1]*v;heights[i]=Math.max(heights[i],z);depths[i]=Math.max(depths[i],-z);minZ=Math.min(minZ,z);maxZ=Math.max(maxZ,z);}
+  for(const x of wallConflicts(angles,boxes)){const k=[x.pair[0],x.folds[0],x.pair[1],x.folds[1]].join('-');if(!hits.has(k))hits.set(k,{...x,operation:op.side,fold:op.fold,degrees:angles[op.side][op.fold]*180/Math.PI});}
+  for(const x of machineConflicts(model,op,angles,boxes)){const key=[op.side,op.fold,x.side,x.fold,x.obstacle].join('-');if(!toolHits.has(key))toolHits.set(key,{...x,partFold:x.fold,operation:op.side,fold:op.fold,degrees:angles[op.side][op.fold]*180/Math.PI});}
+ };
+ if(model.runMode!=='feed')for(const op of foldSequence()){
+  const end=target(op.side,op.fold),steps=Math.max(1,Math.ceil(end*180/Math.PI));for(let k=0;k<=steps;k++){angles[op.side][op.fold]=end*k/steps;inspect(op);}
+ }
+ analysisCache={key,hits:[...hits.values()],toolHits:[...toolHits.values()],heights,depths,minZ,maxZ};return analysisCache;
+}
+function sweep(){return motionAnalysis().hits;}
+function wallHeight(i){return motionAnalysis().heights[i];}
+function handlingSetup(m){
+ // Rotation is around the bottom centre, which differs from the stock centre
+ // when opposite sides have different developed extensions.
+ const halfX=m.length/2+Math.max(sideExtension(m,2),sideExtension(m,3)),halfY=m.width/2+Math.max(sideExtension(m,0),sideExtension(m,1));
+ const radius=Math.hypot(halfX,halfY)+m.thickness,throat=Math.max(...CLAMP_PROFILE.map(p=>p[0]))+m.safetyMargin,requiredTurnY=radius+throat,turnY=m.avoidance==='manual'?m.turnDistance:requiredTurnY;
+ const height=m.runMode==='feed'?0:Math.max(...motionAnalysis().heights),requiredOpenHeight=height+m.safetyMargin,openHeight=m.avoidance==='manual'?m.openHeight:Math.max(90,requiredOpenHeight);
+ return {radius,turnY,openHeight,requiredTurnY,requiredOpenHeight,height};
+}
+function partPose(m,value){
+ const seq=foldSequence(m),step=Math.min(seq.length-1,Math.floor(value)),op=seq[step],p=value>=seq.length?1:value%1,setup=handlingSetup(m),nominal=[0,Math.PI,-Math.PI/2,Math.PI/2],angles=[];
+ seq.forEach((x,k)=>{let desired=nominal[x.side];if(k){let delta=(desired-angles[k-1]+Math.PI)%(2*Math.PI);if(delta<0)delta+=2*Math.PI;delta-=Math.PI;if(Math.abs(delta+Math.PI)<1e-9)delta=Math.PI;desired=angles[k-1]+delta;}angles.push(desired);});
+ let angle=angles[step],centerY=op.workY,phase='work';
+ if(step>0&&seq[step-1].side===op.side&&p<.2){centerY=seq[step-1].workY+(op.workY-seq[step-1].workY)*smooth(p/.2);phase='feed';}
+ else if(step>0&&p<.1){angle=angles[step-1]+(angles[step]-angles[step-1])*smooth(p/.1);centerY=setup.turnY;phase='turn';}
+ else if(step>0&&p<.2){centerY=setup.turnY+(op.workY-setup.turnY)*smooth((p-.1)/.1);phase='feed';}
+ else if(step<seq.length-1&&seq[step+1].side!==op.side&&p>.95){centerY=op.workY+(setup.turnY-op.workY)*smooth((p-.95)/.05);phase='retract';}
+ return {angle,center:[0,centerY,0],active:op.side,fold:op.fold,phase,turning:phase==='turn',feeding:phase==='feed'||phase==='retract'};
+}
+function cycleProgram(m){
+ const rows=[],seq=foldSequence(m),setup=handlingSetup(m);
+ seq.forEach((op,cycle)=>{
+  const side=op.side,fold=op.fold,s=m.sides[side][fold],dry=m.runMode==='feed';
+  const add=(start,end,kind,label,parameter)=>rows.push({number:rows.length+1,side,fold,cycle,start:cycle+start,end:cycle+end,kind,label,parameter,direction:directionDegrees[side],bendAngle:s.sign*(180-s.a)});
+  if(!cycle)add(0,.2,'position','Исходная позиция',`Линия ${foldNumber(side,fold,m)} уже у ножа`);
+  else if(seq[cycle-1].side===side)add(0,.2,'feed','Подача следующего гиба',`${fmt(Math.abs(op.workY-seq[cycle-1].workY))} мм; без поворота стороны`);
+  else{add(0,.1,'turn','Поворот C',`${directionDegrees[side]}°; центр ${fmt(setup.turnY)} мм`);add(.1,.2,'feed','Подача U',`${fmt(setup.turnY-op.workY)} мм к линии ${foldNumber(side,fold,m)}`);}
+  add(.2,.32,dry?'hold':'clamp',dry?'Подача: выдержка':'Прижим / подвод ножа',dry?'Инструмент раскрыт':`Раскрытие ${fmt(setup.openHeight)} → 0 мм`);
+  add(.32,.85,dry?'hold':'bend',dry?'Подача: без гиба':s.a>=180?'Гиб пропущен':'Гиб',dry?'Лист остаётся плоским':`β ${s.sign>0?'+':'−'}${fmt(180-s.a)}°; α ${fmt(s.a)}°`);
+  add(.85,.95,dry?'hold':'release',dry?'Подача: выдержка':'Раскрытие / возврат ножа',dry?'Инструмент раскрыт':`Раскрытие 0 → ${fmt(setup.openHeight)} мм`);
+  const next=seq[cycle+1],retract=next&&next.side!==side;
+  add(.95,1,retract?'retract':next?'hold':'finish',retract?'Отвод для поворота':next?'Подготовка следующего гиба':'Завершение',retract?`${fmt(setup.turnY-op.workY)} мм от линии гиба`:next?'Та же сторона; камера и угол поворота сохраняются':'Извлечение не моделируется');
+ });return rows;
+}
+
+const directionDegrees=[0,180,270,90];
+const smooth=x=>{const t=clamp(x,0,1);return t*t*(3-2*t);};
+
+function clampGap(m,value){
+ const p=value>=cycleCount(m)?1:value%1,open=handlingSetup(m).openHeight;if(m.runMode==='feed')return open;
+ return p<.2?open:p<.32?open*(1-smooth((p-.2)/.12)):p>.85?open*smooth((p-.85)/.1):0;
+}
+function tableGeometry(m,active=0){
+ const mirror=CLAMP_PROFILE.map(([y,z])=>[y,-z]),back=Math.max(...mirror.map(p=>p[0])),bottom=-Math.ceil(CLAMP_HEIGHT);
+ // Preserve the working upper relief. Mounting notches belong to the upper tool,
+ // not to the straight, monolithic table pedestal below the working nose.
+ const profile=[...mirror.slice(0,3),[mirror[2][0],bottom],[back,bottom],...mirror.slice(22)];
+ return {profile,body:profile,start:-m.toolLength/2,end:m.toolLength/2,contactZ:-m.thickness/2,front:0,back,monolithic:true};
+}
+function drawTable(){
+ const table=tableGeometry(model);extrudeProfile(table.body,table.start,table.end,table.contactZ,'#385269','#657b8d');
+}
+let envelopeCache=null,lastScene=null;
+function sceneEnvelope(){
+ const key=JSON.stringify([model,$('showMachine').checked,$('showFrame').checked]);if(envelopeCache?.key===key)return envelopeCache.points;
+ const points=[],setup=handlingSetup(model),seq=foldSequence(),minWork=Math.min(...seq.map(x=>x.workY)),maxWork=Math.max(setup.turnY,...seq.map(x=>x.workY)),motion=motionAnalysis();
+ for(const x of [-setup.radius,setup.radius])for(const y of [minWork-setup.radius,maxWork+setup.radius])for(const z of [motion.minZ-2,motion.maxZ+2])points.push([x,y,z]);
+ if($('showMachine').checked){
+  const table=tableGeometry(model);for(const [y,z]of table.body)for(const x of [table.start,table.end])points.push([x,y,z+table.contactZ]);
+  for(const x of [-model.toolLength/2,model.toolLength/2])for(const [y,z]of CLAMP_PROFILE)for(const lift of [0,setup.openHeight])points.push([x,y,z+model.thickness/2+lift]);
+  if($('showFrame').checked){let low=0,high=0,left=0,right=0;for(let step=0;step<seq.length;step++)for(let j=0;j<=100;j++){const b=benderGeometry(model,step+j/100);low=Math.min(low,b.zOffset);high=Math.max(high,b.zOffset);left=Math.min(left,b.yOffset);right=Math.max(right,b.yOffset);}
+   for(const x of [-model.toolLength/2,model.toolLength/2])for(const [y,z]of ROUNDED_BENDER.profile)for(const offset of [left-2,right+2])for(const lift of [low-2,high+2])points.push([x,y+offset,z+lift]);
+  }
+ }
+ const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];for(const p of points)for(let i=0;i<3;i++){min[i]=Math.min(min[i],p[i]);max[i]=Math.max(max[i],p[i]);}
+ const bounds=[];for(const x of [min[0],max[0]])for(const y of [min[1],max[1]])for(const z of [min[2],max[2]])bounds.push([x,y,z]);envelopeCache={key,points:bounds};return bounds;
+}
+
+// The U-shaped drawing is oriented as the working C-frame in the side section.
+// Frame dimensions without callouts are traced proportions, not factory CAD.
+const BENDER_TRACE=[[70,470],[1310,470],[1310,1210],[1008,1210],[997,1198],[983,1198],[975,1210],[957,1210],[957,1190],[1008,1190],[1099,1165],[1127,1137],[1127,902],[1078,902],[1006,643],[373,643],[289,947],[252,947],[252,1189],[271,1216],[337,1216],[360,1189],[425,1189],[425,1210],[403,1210],[403,1200],[383,1200],[372,1214],[346,1262],[70,1262]];
+const BENDER_SCALE=72.5/132,BENDER_MID=(425+957)/2;
+const BENDER_PROFILE=BENDER_TRACE.map(([x,y])=>[(y-1210)*BENDER_SCALE,(x-BENDER_MID)*BENDER_SCALE]);
+const BENDER_LOWER=(425-BENDER_MID)*BENDER_SCALE,BENDER_UPPER=(957-BENDER_MID)*BENDER_SCALE;
+
+const KNIFE_RADIUS=2;
+function roundedKnifeProfile(){
+ const raw=BENDER_PROFILE,profile=[],knives={},smoothVertices=[];
+ // Both working noses have a 90-degree convex corner. Replace the corner,
+ // rather than placing a cylinder over the frame (which would overlap contours).
+ for(let i=0;i<raw.length;i++){
+  const kind=i===23?'lower':i===7?'upper':null;
+  if(!kind){profile.push(raw[i]);continue;}
+  const [y,z]=raw[i],center=[y-KNIFE_RADIUS,z+(kind==='upper'?KNIFE_RADIUS:-KNIFE_RADIUS)];
+  const start=kind==='lower'?Math.PI/2:0,end=kind==='lower'?0:-Math.PI/2;
+  const arc=Array.from({length:19},(_,j)=>{const a=start+(end-start)*j/18;return [center[0]+KNIFE_RADIUS*Math.cos(a),center[1]+KNIFE_RADIUS*Math.sin(a)];});
+  for(let j=1;j<arc.length-1;j++)smoothVertices.push(profile.length+j);
+  profile.push(...arc);knives[kind]={radius:KNIFE_RADIUS,center,arc};
+ }
+ return {profile,knives,smoothVertices};
+}
+const ROUNDED_BENDER=roundedKnifeProfile();
+function knifeSurfacePoint(kind,angle){
+ const k=ROUNDED_BENDER.knives[kind],a=Math.min(Math.PI/2,Math.max(0,angle));
+ return [k.center[0]+k.radius*Math.sin(a),k.center[1]+(kind==='lower'?1:-1)*k.radius*Math.cos(a)];
+}
+
+function bendContact(m,sideIndex,angle,fold=0){
+ const side=m.sides[sideIndex][fold],sign=side.sign,u=clamp(angle,0,Math.PI/2),R=m.radius+m.thickness/2,outside=m.radius+m.thickness,kind=sign>0?'lower':'upper',knife=ROUNDED_BENDER.knives[kind];
+ // External tangency: the knife's circular nose touches the sheet's outer arc.
+ // The local nose center must therefore follow the sum of the two radii.
+ const bendCenter=[0,sign*R],radius=outside+knife.radius;
+ const center=[-radius*Math.sin(u),sign*(R-radius*Math.cos(u))];
+ const sheetPoint=[-outside*Math.sin(u),sign*(R-outside*Math.cos(u))];
+ const knifePoint=knifeSurfacePoint(kind,u);
+ return {kind,angle:u,bendCenter,center,sheetPoint,knifePoint,radius,outsideRadius:outside,knifeRadius:knife.radius,limitReached:angle>Math.PI/2+1e-8};
+}
+function benderGeometry(m,value){
+ const op=activeOperation(value,m),active=op.side,p=value>=cycleCount(m)?1:value%1,side=m.sides[active][op.fold],angle=(180-side.a)*Math.PI/180*clamp((p-.32)/.53,0,1),sign=side.sign;
+ const trajectory=bendContact(m,active,angle,op.fold),knifePoint=trajectory.knifePoint,workingY=trajectory.sheetPoint[0]-knifePoint[0],workingZ=trajectory.sheetPoint[1]-knifePoint[1];
+ const start=bendContact(m,active,0,op.fold),startY=start.sheetPoint[0]-start.knifePoint[0],startZ=start.sheetPoint[1]-start.knifePoint[1];
+ const approach=smooth((p-.2)/.12),release=1-smooth((p-.85)/.1),factor=value>=cycleCount(m)||m.runMode==='feed'||side.a>=180?0:p<.32?approach:p>.85?release:1;
+ return {profile:ROUNDED_BENDER.profile,knives:ROUNDED_BENDER.knives,knifePoint,trajectory,bendStroke:[workingY-startY,workingZ-startZ],start:-m.toolLength/2,end:m.toolLength/2,yOffset:-m.radius+(workingY+m.radius)*factor,zOffset:workingZ*factor,lowerTip:BENDER_LOWER,upperTip:BENDER_UPPER,active,fold:op.fold,sign,engaged:value<cycleCount(m)&&m.runMode!=='feed'&&side.a<180&&p>=.32&&p<=.85,axis:'YZ',path:'arc',rotation:0,schematic:true};
+}
+
+function drawBender(value){
+ const b=benderGeometry(model,value);if(b.end<=b.start)return;
+ extrudeProfile(b.profile.map(([y,z])=>[y+b.yOffset,z]),b.start,b.end,b.zOffset,'#465f77','#64768b',ROUNDED_BENDER.smoothVertices);
+ // Highlight the real contact edges without adding overlapping solid geometry.
+ for(const [kind,sign]of [['lower',1],['upper',-1]]){
+  const k=b.knives[kind],color=b.engaged&&b.sign===sign?'#ff953e':'#7089a0';
+  for(const x of [b.start,b.end])for(let i=1;i<k.arc.length;i++)edgeList.push({a:[x,k.arc[i-1][0]+b.yOffset,k.arc[i-1][1]+b.zOffset],b:[x,k.arc[i][0]+b.yOffset,k.arc[i][1]+b.zOffset],color,width:1,bias:.001});
+  for(const p of [k.arc[0],k.arc.at(-1)])edgeList.push({a:[b.start,p[0]+b.yOffset,p[1]+b.zOffset],b:[b.end,p[0]+b.yOffset,p[1]+b.zOffset],color,width:1,bias:.001});
+ }
+}
+function clampAssembly(m){
+ const L=toolSetup(m).length;if(L<=0)return [];
+ const n=Math.max(1,Math.ceil(L/100));
+ return Array.from({length:n},(_,i)=>({kind:'standard',start:-L/2+L*i/n,end:-L/2+L*(i+1)/n}));
+}
+
+function profileTriangles(poly){
+ const cross2=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+ const area=poly.reduce((s,a,i)=>{const b=poly[(i+1)%poly.length];return s+a[0]*b[1]-b[0]*a[1]},0),sign=Math.sign(area),ids=poly.map((_,i)=>i),out=[];
+ while(ids.length>3){let clipped=false;for(let j=0;j<ids.length;j++){
+  const a=ids[(j+ids.length-1)%ids.length],b=ids[j],c=ids[(j+1)%ids.length];if(sign*cross2(poly[a],poly[b],poly[c])<=1e-8)continue;
+  const inside=ids.some(k=>k!==a&&k!==b&&k!==c&&sign*cross2(poly[a],poly[b],poly[k])>=-1e-8&&sign*cross2(poly[b],poly[c],poly[k])>=-1e-8&&sign*cross2(poly[c],poly[a],poly[k])>=-1e-8);
+  if(inside)continue;out.push([a,b,c]);ids.splice(j,1);clipped=true;break;
+ }if(!clipped)throw Error('Некорректный силуэт прижима');}
+ if(ids.length===3)out.push(ids);return out;
+}
+function extrudeProfile(poly,start,end,lift,color,edge='#64768b',smoothVertices=[]){
+ const point=(x,p)=>[x,p[0],p[1]+lift];
+ for(const tri of profileTriangles(poly))for(const x of [start,end])face(tri.map(i=>point(x,poly[i])),color,false);
+ for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length];face([point(start,a),point(end,a),point(end,b),point(start,b)],color,false);
+  for(const x of [start,end])edgeList.push({a:point(x,a),b:point(x,b),color:edge});
+  if(!smoothVertices.includes(i))edgeList.push({a:point(start,a),b:point(end,a),color:edge});
+ }
+}
+function drawClamp(lift){
+ for(const s of clampAssembly(model))extrudeProfile(CLAMP_PROFILE,s.start,s.end,lift,'#536f86');
+}
+
+function turn(p,angle){return [p[0]*Math.cos(angle)-p[1]*Math.sin(angle),p[0]*Math.sin(angle)+p[1]*Math.cos(angle),p[2]];}
+function rgb(hex){return [parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)];}
+function rasterScene(ctx,width,height,faces,lines){
+ const image=ctx.createImageData(width,height),pixels=image.data,depth=new Float64Array(width*height);depth.fill(Infinity);const owner=new Int32Array(width*height);owner.fill(-1);
+ const contourDepth=new Float64Array(width*height);contourDepth.fill(Infinity);const contourOwner=new Int32Array(width*height);contourOwner.fill(-1);const contourCoverage=new Float32Array(width*height);
+ const edgeKey=(a,b)=>[a,b].map(p=>p.map(v=>v.toFixed(5)).join(',')).sort().join('|');
+ // Compare depth at the contour's actual subpixel position, not at the pixel centre.
+ // This prevents a lower parallel surface from bleeding through a thin sheet on sloped views.
+ const facePlanes=faces.map(f=>{const a=f.q[0];for(let i=1;i<f.q.length-1;i++){const b=f.q[i],c=f.q[i+1],area=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);if(Math.abs(area)<1e-9)continue;return {dx:((b[2]-a[2])*(c[1]-a[1])-(c[2]-a[2])*(b[1]-a[1]))/area,dy:((b[0]-a[0])*(c[2]-a[2])-(c[0]-a[0])*(b[2]-a[2]))/area};}return {dx:0,dy:0};});
+ const surfaceEdges=new Map();for(let i=0;i<faces.length;i++){const q=faces[i].q;for(let j=0;j<q.length;j++){const key=edgeKey(q[j],q[(j+1)%q.length]);if(!surfaceEdges.has(key))surfaceEdges.set(key,new Set());surfaceEdges.get(key).add(i);}}
+ const contourMap=new Map();for(const line of lines){const key=edgeKey(line.a,line.b),old=contourMap.get(key);if(!old||(line.width||.65)>=(old.width||.65))contourMap.set(key,line);}
+ // Deterministic ties prevent speckles on coincident faces at section joints.
+ const facingRank=i=>(faces[i].layer||0)*0x1000000+parseInt(faces[i].color.slice(1),16);
+ function triangle(a,b,c,color,faceIndex){
+  const area=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);if(Math.abs(area)<1e-9)return;
+  const minX=Math.max(0,Math.floor(Math.min(a[0],b[0],c[0]))),maxX=Math.min(width-1,Math.ceil(Math.max(a[0],b[0],c[0]))),minY=Math.max(0,Math.floor(Math.min(a[1],b[1],c[1]))),maxY=Math.min(height-1,Math.ceil(Math.max(a[1],b[1],c[1])));
+  const ix=(c[1]-a[1])/area,iy=-(c[0]-a[0])/area,jx=-(b[1]-a[1])/area,jy=(b[0]-a[0])/area;
+  for(let y=minY;y<=maxY;y++){let dx=minX+.5-a[0],dy=y+.5-a[1],u=dx*ix+dy*iy,v=dx*jx+dy*jy;for(let x=minX;x<=maxX;x++,u+=ix,v+=jx){const s=1-u-v;if(u>=-1e-8&&v>=-1e-8&&s>=-1e-8){const z=s*a[2]+u*b[2]+v*c[2],index=y*width+x;const previous=owner[index],epsilon=1e-7*Math.max(1,Math.abs(z));if(z<depth[index]-epsilon||(Math.abs(z-depth[index])<=epsilon&&(previous<0||facingRank(faceIndex)>facingRank(previous)))){depth[index]=z;owner[index]=faceIndex;const p=index*4;pixels[p]=color[0];pixels[p+1]=color[1];pixels[p+2]=color[2];pixels[p+3]=255;}}}}
+ }
+ for(let faceIndex=0;faceIndex<faces.length;faceIndex++){const f=faces[faceIndex],normal=cross(add(f.q[1],mul(f.q[0],-1)),add(f.q[2],mul(f.q[0],-1))),m=len(normal),shade=m?(.68+.32*Math.abs(dot(mul(normal,1/m),[.25,-.45,.857]))):1,color=rgb(f.color).map(c=>Math.round(c*shade));for(let j=1;j<f.q.length-1;j++)triangle(f.q[0],f.q[j],f.q[j+1],color,faceIndex);}
+ let visibleEdges=0;const contours=[...contourMap.values()],contourIndex=new Map(contours.map((line,i)=>[line,i]));
+ for(const [key,line]of contourMap){const adjacent=surfaceEdges.get(key);const a=line.a,b=line.b,dx=b[0]-a[0],dy=b[1]-a[1],length2=dx*dx+dy*dy;if(length2<1e-8)continue;const color=rgb(line.color),r=line.width||.65,margin=Math.ceil(r+1),minX=Math.max(0,Math.floor(Math.min(a[0],b[0])-margin)),maxX=Math.min(width-1,Math.ceil(Math.max(a[0],b[0])+margin)),minY=Math.max(0,Math.floor(Math.min(a[1],b[1])-margin)),maxY=Math.min(height-1,Math.ceil(Math.max(a[1],b[1])+margin));let visible=false;
+  for(let y=minY;y<=maxY;y++){const middle=Math.abs(dy)>1e-9?a[0]+(y+.5-a[1])*dx/dy:(a[0]+b[0])/2,spread=Math.abs(dy)>1e-9?(r+.5)*Math.sqrt(length2)/Math.abs(dy):width,begin=Math.max(minX,Math.floor(middle-spread-1)),end=Math.min(maxX,Math.ceil(middle+spread+1));for(let x=begin;x<=end;x++){const t=clamp(((x+.5-a[0])*dx+(y+.5-a[1])*dy)/length2,0,1),qx=a[0]+t*dx,qy=a[1]+t*dy,dist=Math.hypot(x+.5-qx,y+.5-qy),coverage=clamp(r+.45-dist,0,1);if(coverage<=0)continue;const z=a[2]+t*(b[2]-a[2]),index=y*width+x;const plane=facePlanes[owner[index]],front=plane?depth[index]+plane.dx*(qx-x-.5)+plane.dy*(qy-y-.5):depth[index];if(!adjacent?.has(owner[index])&&z>front+Math.min(line.bias??.0001,.001))continue;visible=true;const previous=contourOwner[index],epsilon=1e-7*Math.max(1,Math.abs(z));if(z<contourDepth[index]-epsilon||(Math.abs(z-contourDepth[index])<=epsilon&&(previous<0||r>(contours[previous].width||.65)||r===(contours[previous].width||.65)&&parseInt(line.color.slice(1),16)>parseInt(contours[previous].color.slice(1),16)))){contourDepth[index]=z;contourOwner[index]=contourIndex.get(line);contourCoverage[index]=coverage;}else if(previous===contourIndex.get(line))contourCoverage[index]=Math.max(contourCoverage[index],coverage);}}
+  if(visible)visibleEdges++;
+ }
+ // Composite one nearest contour per pixel, rather than stacking rear contours.
+ const contourColors=contours.map(line=>rgb(line.color));
+ for(let index=0;index<contourOwner.length;index++){const selected=contourOwner[index];if(selected<0)continue;const p=index*4,color=contourColors[selected],coverage=contourCoverage[index],opacity=pixels[p+3]/255,alpha=coverage+opacity*(1-coverage);for(let k=0;k<3;k++)pixels[p+k]=alpha?(color[k]*coverage+pixels[p+k]*opacity*(1-coverage))/alpha:0;pixels[p+3]=alpha*255;}
+ ctx.putImageData(image,0,0);lastRaster={depth,width,height,visibleEdges,faces:faces.length,uniqueEdges:contourMap.size,duplicateEdges:lines.length-contourMap.size};return lastRaster;
+}
+function wallShell(i,angles,color){
+ const half=Math.max(0,sideInfo(i).span/2-model.gap),t=model.thickness/2;if(half<=0)return;
+ const nodes=profile2D(model,i,angles).nodes;
+ for(let j=0;j<nodes.length-1;j++){
+  const a=nodes[j],b=nodes[j+1],tone=color(b.fold);
+  for(const v of [-t,t])face([sheetPoint(i,a,v,-half),sheetPoint(i,a,v,half),sheetPoint(i,b,v,half),sheetPoint(i,b,v,-half)],tone,false);
+  for(const side of [-half,half])face([sheetPoint(i,a,-t,side),sheetPoint(i,b,-t,side),sheetPoint(i,b,t,side),sheetPoint(i,a,t,side)],tone,false);
+ }
+ const end=nodes.at(-1);face([sheetPoint(i,end,-t,-half),sheetPoint(i,end,-t,half),sheetPoint(i,end,t,half),sheetPoint(i,end,t,-half)],color(end.fold),false);
+ for(const side of [-half,half])for(const v of [-t,t])for(let j=1;j<nodes.length;j++)edgeList.push({a:sheetPoint(i,nodes[j-1],v,side),b:sheetPoint(i,nodes[j],v,side),color:'#50677d'});
+ for(const v of [-t,t])edgeList.push({a:sheetPoint(i,end,v,-half),b:sheetPoint(i,end,v,half),color:'#50677d'});
+}
+
+function draw3D(){
+ const [ctx,w,h]=canvas('view');if(w<2||h<2)return;
+ const angles=foldAnglesAt(progress),op=activeOperation(),active=op.side,span=sideInfo(active).span,theta=angles[active][op.fold],p=progress>=cycleCount()?1:progress%1,identity=[[1,0,0],[0,1,0],[0,0,1]],collisions=new Set(conflicts(angles).flat());faceList=[];edgeList=[];
+ if(p>=.32&&p<=.85)for(const hit of machineConflicts(model,op,angles))collisions.add(hit.side);
+ let tableFaces=[],tableEdges=[],toolFaces=[],toolEdges=[];
+ if($('showMachine').checked){
+  drawTable();tableFaces=faceList;tableEdges=edgeList;faceList=[];edgeList=[];
+  const gap=clampGap(model,progress);
+  drawClamp(model.thickness/2+gap);if($('showFrame').checked)drawBender(progress);
+  toolFaces=faceList;toolEdges=edgeList;faceList=[];edgeList=[];
+ }
+ const baseCorners=[];for(const x of [-model.length/2,model.length/2])for(const y of [-model.width/2,model.width/2])baseCorners.push([x,y,model.thickness/2]);
+ box([0,0,0],identity,[model.length/2,model.width/2,model.thickness/2],collisions.has(4)?'#e0635f':'#b1c3d5',false);
+ for(let i=0;i<4;i++)wallShell(i,angles[i],j=>collisions.has(i)?'#e0635f':i===active&&j===op.fold?'#e6a465':'#b1c3d5');
+ for(let i=0;i<4;i++){const half=sideInfo(i).span/2,trim=Math.min(model.gap,half),segments=model.sides[i].some(f=>f.h>0)?[[-half,-half+trim],[half-trim,half]]:[[-half,half]];for(const [a,b]of segments)if(b>a)edgeList.push({a:at(i,0,0,model.thickness/2,a),b:at(i,0,0,model.thickness/2,b),color:'#50677d'});}
+ const pose=partPose(model,progress),world=q=>add(turn(q,pose.angle),pose.center);
+ faceList=[...tableFaces,...toolFaces,...faceList.map(f=>({...f,points:f.points.map(world)}))];edgeList=[...tableEdges,...toolEdges,...edgeList.map(e=>({...e,a:world(e.a),b:world(e.b)}))];
+ const toolXY=toolFaces.flatMap(f=>f.points);const footprint=toolXY.length?[Math.min(...toolXY.map(q=>q[0])),Math.max(...toolXY.map(q=>q[0])),Math.min(...toolXY.map(q=>q[1])),Math.max(...toolXY.map(q=>q[1]))]:[];
+ lastScene={toolFootprint:footprint,baseCorners:baseCorners.map(world),tableVertices:tableFaces.flatMap(f=>f.points),active,activeFold:op.fold,tableFixed:true,partFixed:pose.phase==='work',pose,clampGap:clampGap(model,progress),toolAxis:[[0,0,0],[1,0,0]],camera:{yaw,pitch,zoom,orientation:[...orientation],panX,panY,verticalLock:$('lockVertical').checked}};
+ const crease=profile2D(model,active,angles[active]).bends[op.fold],creaseNode={p:crease.start,normal:[-Math.sin(crease.before),Math.cos(crease.before)]},half=Math.max(0,span/2-model.gap);if(half>0)edgeList.push({a:world(sheetPoint(active,creaseNode,model.thickness/2,-half)),b:world(sheetPoint(active,creaseNode,model.thickness/2,half)),color:'#ff953e',width:1.1,bias:.02});lastScene.creasePoints=[world(sheetPoint(active,creaseNode,0,-half)),world(sheetPoint(active,creaseNode,0,half))];
+ const camera=q=>{const v=turn(q,yaw);return rotateQuaternion([v[0],v[1]*Math.sin(pitch)+v[2]*Math.cos(pitch),v[1]*Math.cos(pitch)-v[2]*Math.sin(pitch)],orientation);};
+ const cameraFaces=faceList.map(f=>({...f,q:f.points.map(camera)})),vertices=sceneEnvelope().map(camera);if(!vertices.length)return;
+ let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;for(const q of vertices){minX=Math.min(minX,q[0]);maxX=Math.max(maxX,q[0]);minY=Math.min(minY,q[1]);maxY=Math.max(maxY,q[1]);}
+ const margin=w<500?24:38,fitKey=JSON.stringify([model,w,h,$('showMachine').checked,$('showFrame').checked]);if(projectionFit?.key!==fitKey)projectionFit={key:fitKey,scale:Math.min((w-2*margin)/Math.max(1,maxX-minX),(h-2*margin-28)/Math.max(1,maxY-minY))};const scale=projectionFit.scale*zoom,cx=(minX+maxX)/2,cy=(minY+maxY)/2;
+ const project=q=>[w/2+panX+(q[0]-cx)*scale,h/2+12+panY-(q[1]-cy)*scale,q[2]],pixelRatio=$('view').width/w,pixel=q=>{const v=project(q);return [v[0]*pixelRatio,v[1]*pixelRatio,v[2]];};
+ const raster=rasterScene(ctx,$('view').width,$('view').height,cameraFaces.map(f=>({...f,q:f.q.map(pixel)})),edgeList.map(e=>({...e,a:pixel(camera(e.a)),b:pixel(camera(e.b)),width:(e.width||.55)*pixelRatio})));
+ lastFit={minX:project([minX,cy,0])[0],maxX:project([maxX,cy,0])[0],minY:project([cx,maxY,0])[1],maxY:project([cx,minY,0])[1],width:w,height:h,zoom,panX,panY,scale,cx,cy,anchor:project(camera([0,0,0]))};
+ ctx.fillStyle='#afbdd0';ctx.font='12px system-ui';ctx.fillText($('showMachine').checked?'Прижим: стандартные секции':'Деталь · видимые поверхности',12,20);
+ const labels=[];for(let i=0;i<4;i++){if(!model.sides[i].some(f=>f.h>0))continue;const endNode=profile2D(model,i,angles[i]).nodes.at(-1),q=project(camera(world(sheetPoint(i,endNode,model.thickness/2)))),xx=Math.floor(q[0]*pixelRatio),yy=Math.floor(q[1]*pixelRatio);if(q[0]<0||q[0]>w||q[1]<28||q[1]>h)continue;if(xx>=0&&xx<raster.width&&yy>=0&&yy<raster.height&&q[2]>raster.depth[yy*raster.width+xx]+1)continue;let x=clamp(q[0]+7,12,w-24),y=clamp(q[1]-7,38,h-15);for(const old of labels)if(Math.abs(x-old.x)<22&&Math.abs(y-old.y)<20)y=clamp(old.y+22,38,h-15);labels.push({x,y});ctx.fillStyle=collisions.has(i)?'#ff8580':'#fff2dc';ctx.font='bold 14px system-ui';ctx.fillText(names[i],x,y);}
+ drawCross(active,theta);drawContact(active,theta);if(valid)updateProgramState();
+}
+
+function drawCross(i,phi){
+ const [c,w,h]=canvas('cross'),angles=foldAnglesAt(progress)[i],nodes=profile2D(model,i,angles).nodes,t=model.thickness;
+ const contours=[-t/2,t/2].map(v=>[[-40,v],...nodes.map(n=>[n.p[0]+n.normal[0]*v,n.p[1]+n.normal[1]*v])]);
+ const all=contours.flat(),xs=all.map(p=>p[0]),ys=all.map(p=>p[1]),loX=Math.min(...xs),hiX=Math.max(...xs),loZ=Math.min(...ys),hiZ=Math.max(...ys),scale=Math.min((w-45)/Math.max(80,hiX-loX),(h-45)/Math.max(60,hiZ-loZ)),project=p=>[w/2+(p[0]-(loX+hiX)/2)*scale,h/2-(p[1]-(loZ+hiZ)/2)*scale];
+ c.beginPath();[...contours[0],...contours[1].reverse()].forEach((p,j)=>j?c.lineTo(...project(p)):c.moveTo(...project(p)));c.closePath();c.fillStyle='#e6a465';c.fill();c.strokeStyle='#f9b86f';c.lineWidth=1.4;c.stroke();
+ $('crossLabel').textContent=`Борт ${names[i]} · ${model.sides[i].length} гибов · наружный R = ${model.thickness} мм · цепочка показана с толщиной листа`;
+}
+function drawContact(i,phi){
+ const [c,w,h]=canvas('contactView'),side=model.sides[i][activeOperation().fold],sign=side.sign,t=model.thickness,R=model.radius+t/2,b=bendContact(model,i,phi,activeOperation().fold),a=b.angle,span=b.radius+KNIFE_RADIUS+2;
+ const scale=Math.min((w-55)/(span*2),(h-55)/(span*2)),mid=[-b.radius/2,sign*R],project=q=>[w/2+(q[0]-mid[0])*scale,h/2+8-(q[1]-mid[1])*scale];
+ const path=points=>{c.beginPath();points.forEach((q,j)=>j?c.lineTo(...project(q)):c.moveTo(...project(q)));};
+ // Sheet section: real thickness, outer circular arc and the straight flange.
+ const point=(u,d,v)=>[-((R-v*sign)*Math.sin(u)+d*Math.cos(u)),sign*(R*(1-Math.cos(u))+d*Math.sin(u))+v*Math.cos(u)];
+ const rows=[];for(const v of [-t/2,t/2]){const row=[[span,v]];for(let j=0;j<=60;j++)row.push(point(a*j/60,0,v));row.push(point(a,Math.min(span,side.h),v));rows.push(row);}
+ path([...rows[0],...rows[1].reverse()]);c.closePath();c.fillStyle='#e6a465';c.fill();c.strokeStyle='#ffb571';c.lineWidth=1.3;c.stroke();
+ // The dashed line is the center of R2, not a second knife or a sheet contour.
+ const sweep=Array.from({length:61},(_,j)=>bendContact(model,i,Math.min(Math.PI/2,(180-side.a)*Math.PI/180)*j/60,activeOperation().fold).center);
+ path(sweep);c.setLineDash([4,4]);c.strokeStyle='#69c8e7';c.lineWidth=1.4;c.stroke();c.setLineDash([]);
+ if(model.runMode!=='feed'&&side.h>0&&side.a<180){
+  const n=ROUNDED_BENDER.knives[b.kind],offset=[b.center[0]-n.center[0],b.center[1]-n.center[1]];
+  // Filled circular sector represents only the rounded part of the actual nose.
+  path([b.center,...n.arc.map(q=>[q[0]+offset[0],q[1]+offset[1]])]);c.closePath();c.fillStyle='#465f77';c.fill();c.strokeStyle='#92abc2';c.lineWidth=1.4;c.stroke();
+  path([b.bendCenter,b.center]);c.strokeStyle='#69c8e7';c.lineWidth=1;c.stroke();
+  for(const [q,color]of [[b.bendCenter,'#69c8e7'],[b.center,'#69c8e7'],[b.sheetPoint,'#ffed91']]){c.beginPath();c.arc(...project(q),2.4,0,Math.PI*2);c.fillStyle=color;c.fill();}
+ }
+ c.fillStyle='#b4c3d6';c.font='12px system-ui';c.fillText(`Rдет ${fmt(b.outsideRadius)} · Rнож 2 · Rдвиж ${fmt(b.radius)} мм`,10,18);
+ $('contactLabel').textContent=model.runMode==='feed'?'Режим подачи: радиусная геометрия показана справочно; гибочный нож отведён.':`Пунктир — траектория центра скругления R2. Rдвиж = ${fmt(b.outsideRadius)} + 2 = ${fmt(b.radius)} мм. Жёлтая точка — касание наружного радиуса детали и ножа.${b.limitReached?' Показан предел круглой кромки 90°; дальнейшее движение не подтверждено.':''}`;
+}
+
+
+function drawFlat(){
+ const [c,w,h]=canvas('flat'),[bx,by]=blankSize(),ext=[0,1,2,3].map(i=>sideExtension(model,i)),scale=Math.min((w-46)/bx,(h-38)/by),X=(w-bx*scale)/2,Y=(h-by*scale)/2,x=X+ext[3]*scale,y=Y+ext[0]*scale,L=model.length*scale,W=model.width*scale,gap=model.gap*scale;
+ c.fillStyle='#839aaf';c.fillRect(x,y,L,W);c.fillStyle='#b0bfd0';c.fillRect(x+gap,Y,Math.max(0,L-2*gap),ext[0]*scale);c.fillRect(x+gap,y+W,Math.max(0,L-2*gap),ext[1]*scale);c.fillRect(x+L,y+gap,ext[2]*scale,Math.max(0,W-2*gap));c.fillRect(X,y+gap,ext[3]*scale,Math.max(0,W-2*gap));
+ c.setLineDash([4,4]);c.strokeStyle='#ff953e';c.lineWidth=1;
+ for(let i=0;i<4;i++){let offset=0;model.sides[i].forEach((f,j)=>{
+  const d=offset*scale,pair=i===0?[[x,y-d],[x+L,y-d]]:i===1?[[x,y+W+d],[x+L,y+W+d]]:i===2?[[x+L+d,y],[x+L+d,y+W]]:[[x-d,y],[x-d,y+W]];
+  c.beginPath();c.moveTo(...pair[0]);c.lineTo(...pair[1]);c.stroke();offset+=f.h+bendAllowance(model,f);
+ });}
+ c.setLineDash([]);c.fillStyle='#ffe8c2';c.font='12px system-ui';c.textAlign='center';c.fillText('А',x+L/2,Y+ext[0]*scale/2+4);c.fillText('Б',x+L/2,y+W+ext[1]*scale/2+4);c.fillText('В',x+L+ext[2]*scale/2,y+W/2+4);c.fillText('Г',X+ext[3]*scale/2,y+W/2+4);c.textAlign='left';
+ $('blankLabel').textContent=`Заготовка ${fmt(bx)} × ${fmt(by)} мм. Показаны все ${cycleCount()} линии; угловые вырезы схематичны.`;
+}
+
+function save(){const data=JSON.stringify({format:'bdc3200-panel-v2',model},null,2),url=URL.createObjectURL(new Blob([data],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='BDC3200-panel.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+async function loadFile(file){if(!file)return;try{if(file.size>100000)throw Error('Проект слишком большой.');const data=JSON.parse(await file.text());if(!['bdc3200-panel-v1','bdc3200-panel-v2'].includes(data.format))throw Error('Неподдерживаемый формат проекта.');const v=validate(data.model);model={};for(const k of Object.keys(defs))model[k]=structuredClone(v[k]);playing=false;$('play').textContent='▶ Пуск';fill();$('fileError').textContent='Проект открыт. Наружный радиус пересчитан по толщине листа.'}catch(e){$('fileError').textContent='Не удалось открыть: '+e.message}$('load').value=''}
+function printReport(){const r=lastReport,p=$('printReport');p.replaceChildren();const heading=document.createElement('h1');heading.textContent='BDC3200 — геометрическая оценка';p.append(heading);const intro=document.createElement('p');intro.textContent=`Заготовка ${fmt(model.blankLength)} × ${fmt(model.blankWidth)} мм. K = ${fmt(model.kfactor)} автоматически по геометрии. Без автоматической смены инструмента. Фиксированная рабочая длина ${fmt(model.toolLength)} мм, торцевой зазор ${model.toolClearance} мм. Дно ${model.length} × ${model.width} мм. Толщина ${model.thickness} мм. Наружный радиус ${model.thickness} мм = t; внутренний радиус ${model.radius} мм. Верхний / нижний ножи R2 мм. Материал: ${$('material').selectedOptions[0].textContent}. Развёртка ${fmt(r.blank[0])} × ${fmt(r.blank[1])} мм. Порядок: ${model.order.split(',').map(i=>names[Number(i)]).join(' → ')}.`;p.append(intro);const mode=document.createElement('p');mode.textContent=`Режим: ${model.runMode==='feed'?'подача без гиба':'гибка'}. Траектория: малая радиусная, Rдвиж = ${fmt(model.thickness+KNIFE_RADIUS)} мм. Обход: ${model.avoidance==='auto'?'автоматический расчёт':'заданные позиции'}.`;p.append(mode);const pt=document.createElement('table');for(const row of r.program){const tr=document.createElement('tr');for(const v of [row.number,`${foldLabel(row.side,row.fold)} / ${row.direction}°`,row.label,row.parameter,r.diagnostics.filter(x=>x.step===row.number).map(x=>`${x.code}: ${x.text}`).join('; ')]){const td=document.createElement('td');td.textContent=String(v);tr.append(td)}pt.append(tr)}p.append(pt);const st=document.createElement('h2');st.textContent=$('status').textContent;p.append(st);const table=document.createElement('table');for(const c of r.checks){const tr=document.createElement('tr');for(const v of [c.state==='ok'?'Пройдено':c.state==='fail'?'Препятствие':'Не подтверждено',c.title,c.text]){const td=document.createElement('td');td.textContent=v;tr.append(td)}table.append(tr)}p.append(table);const note=document.createElement('p');note.textContent='Прототип 4.2: прямоугольная заготовка, цепочки до 8 гибов на каждую сторону. Схема прижима учтена: стандартные секции одного профиля по всей длине до начала цикла. Контур обычного прижима соответствует основной детали нижнего Word-чертежа без отдельной накладки 80 мм. Весь профиль установлен вертикально, включая корпус и крепление. Стол оставлен только под прижимом: верхняя кромка зеркальная, нижний корпус прямой с плоским основанием, без крепёжных вырезов инструмента; монолитный по рабочей длине, без секционных стыков. Гибочная рама с двумя ножами и профиль прижима из Word-схемы показаны приближённо. Радиусная траектория связана с радиусами касания детали и ножа; данные заводского хода не подтверждены. Прямые полки проверены против дна, друг друга и схемы прижима/стола во время гибки. Точные ширины секций, гибочная рама, зоны радиуса, захват, подача, поворот, извлечение, пружинение и полная кинематика станка не проверены. Отчёт не подтверждает изготовление на реальном оборудовании.';p.append(note);window.print()}
+for(const k of [...Object.keys(ranges),'material','maxWidth','maxHeight','runMode','knifePath','avoidance'])$(k).addEventListener('change',read);$('sides').addEventListener('change',read);$('sides').addEventListener('click',e=>{const b=e.target.closest('button[data-add],button[data-remove]');if(!b)return;read();if(b.dataset.add!==undefined){const i=Number(b.dataset.add);if(editSides[i].length<8)editSides[i].push({h:20,a:90,sign:-editSides[i].at(-1).sign});}else{const [i,j]=b.dataset.remove.split(':').map(Number);if(editSides[i].length>1)editSides[i].splice(j,1);}renderSideInputs();read();});
+$('timeline').addEventListener('input',()=>{progress=Number($('timeline').value);playing=false;$('play').textContent='▶ Пуск';dirty=true});$('play').onclick=()=>{if(!valid)return;playing=!playing;if(playing&&progress>=cycleCount())progress=0;playStop=$('singleStep').checked?actionBoundary(progress):cycleCount();$('play').textContent=playing?'Ⅱ Пауза':'▶ Пуск';dirty=true};$('back').onclick=()=>{progress=actionBoundary(progress,false);playing=false;$('play').textContent='▶ Пуск';$('timeline').value=progress;dirty=true};$('next').onclick=()=>{progress=actionBoundary(progress);playing=false;$('play').textContent='▶ Пуск';$('timeline').value=progress;dirty=true};$('singleStep').onchange=()=>{playStop=$('singleStep').checked?actionBoundary(progress):cycleCount();};$('program').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b||!valid)return;const row=programRows.find(r=>r.number===Number(b.dataset.action));if(row)goTo((row.start+row.end)/2);});$('selfCheck').onclick=()=>{if(!valid)return;check();const failures=programIssues.filter(x=>x.state==='fail');if(failures.length){const row=programRows.find(r=>r.number===failures[0].step);goTo((row.start+row.end)/2);$('selfCheckResult').textContent=`${failures.length} препятствий. Открыт первый проблемный шаг ${row.number}: ${failures[0].text}`;}else if(lastReport.failed)$('selfCheckResult').textContent='В текущем режиме действий препятствий не найдено, но геометрия проекта имеет ограничения: '+lastReport.checks.filter(c=>c.state==='fail').map(c=>c.title).join('; ')+'. См. проверку технологичности ниже.';else $('selfCheckResult').textContent='Проверенные параметры программы проходят. Полные столкновения, захват, извлечение и заводские ограничения без данных не проверены.';};$('iso').onclick=()=>{yaw=Math.PI-.62;pitch=.65;resetView();dirty=true};$('side').onclick=()=>{yaw=Math.PI/2;pitch=.05;resetView();dirty=true};$('top').onclick=()=>{yaw=0;pitch=Math.PI/2;resetView();dirty=true};$('fit').onclick=()=>{zoom=1;panX=panY=0;projectionFit=null;startGesture();dirty=true};$('save').onclick=save;$('loadBtn').onclick=()=>$('load').click();$('load').onchange=()=>loadFile($('load').files[0]);$('report').onclick=printReport;
+// Unit quaternions avoid poles and allow arbitrary camera orientation.
+function quaternionProduct(a,b){
+ return [a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1],a[3]*b[1]-a[0]*b[2]+a[1]*b[3]+a[2]*b[0],a[3]*b[2]+a[0]*b[1]-a[1]*b[0]+a[2]*b[3],a[3]*b[3]-a[0]*b[0]-a[1]*b[1]-a[2]*b[2]];
+}
+function applyRotation(q){const v=quaternionProduct(q,orientation),n=Math.hypot(...v);orientation=v.map(x=>x/n);}
+function rotateQuaternion(v,q){const t=mul(cross(q.slice(0,3),v),2);return add(v,add(mul(t,q[3]),cross(q.slice(0,3),t)));}
+function resetView(){projectionFit=null;zoom=1;orientation=[0,0,0,1];panX=panY=0;startGesture();}
+function arcball(point){
+ const rect=$('view').getBoundingClientRect(),r=Math.max(1,Math.min(rect.width,rect.height)/2),x=(point.x-(rect.left||0)-rect.width/2-panX)/r,y=(-(point.y-(rect.top||0)-rect.height/2-12-panY))/r,d=x*x+y*y;
+ return unit([x,y,d<=.5?Math.sqrt(1-d):.5/Math.sqrt(d)]);
+}
+function rotateDrag(from,to){if($('lockVertical').checked){yaw+=(to.x-from.x)*.006;pitch=clamp(pitch-(to.y-from.y)*.006,-1.48,1.48);orientation=[0,0,0,1];return;}const a=arcball(from),b=arcball(to),q=[...cross(a,b),1+dot(a,b)],n=Math.hypot(...q);if(n>1e-8)applyRotation(q.map(x=>x/n));}
+function zoomView(value,point){
+ const next=clamp(value,.2,8),ratio=next/zoom;
+ if(point){const rect=$('view').getBoundingClientRect(),x=point.x-(rect.left||0)-rect.width/2,y=point.y-(rect.top||0)-rect.height/2-12;panX=x-(x-panX)*ratio;panY=y-(y-panY)*ratio;}
+ zoom=next;dirty=true;
+}
+const pointers=new Map();let gesture=null;
+function startGesture(){
+ const list=[...pointers.values()];
+ gesture=list.length===2?{distance:Math.hypot(list[0].x-list[1].x,list[0].y-list[1].y),angle:Math.atan2(list[1].y-list[0].y,list[1].x-list[0].x),center:{x:(list[0].x+list[1].x)/2,y:(list[0].y+list[1].y)/2}}:null;
+ drag=list.length===1?{...list[0]}:null;
+}
+function setViewMode(mode){viewMode=mode;for(const [id,v]of [['rotateMode','rotate'],['panMode','pan']])$(id).setAttribute('aria-pressed',String(v===mode));startGesture();}
+$('lockVertical').onchange=()=>{if($('lockVertical').checked){orientation=[0,0,0,1];pitch=clamp(pitch,-1.48,1.48);}startGesture();dirty=true;};$('rotateMode').onclick=()=>setViewMode('rotate');$('panMode').onclick=()=>setViewMode('pan');
+$('view').addEventListener('contextmenu',e=>e.preventDefault());
+$('view').addEventListener('pointerdown',e=>{e.preventDefault();pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,pan:e.button===1||e.button===2||e.shiftKey});$('view').setPointerCapture(e.pointerId);startGesture();});
+$('view').addEventListener('pointermove',e=>{
+ if(!pointers.has(e.pointerId))return;
+ const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,pan:old.pan});const list=[...pointers.values()];
+ if(list.length===2&&gesture){
+  const distance=Math.hypot(list[0].x-list[1].x,list[0].y-list[1].y),angle=Math.atan2(list[1].y-list[0].y,list[1].x-list[0].x),center={x:(list[0].x+list[1].x)/2,y:(list[0].y+list[1].y)/2};
+  zoomView(zoom*distance/Math.max(1,gesture.distance),gesture.center);
+  panX+=center.x-gesture.center.x;panY+=center.y-gesture.center.y;
+  const roll=-(angle-gesture.angle);if(!$('lockVertical').checked)applyRotation([0,0,Math.sin(roll/2),Math.cos(roll/2)]);
+  gesture={distance,angle,center};
+ }else if(list.length===1&&drag){
+  if(viewMode==='pan'||old.pan||e.shiftKey){panX+=e.clientX-drag.x;panY+=e.clientY-drag.y;}else rotateDrag(drag,list[0]);
+  drag={...list[0]};
+ }
+ dirty=true;
+});
+for(const ev of ['pointerup','pointercancel','lostpointercapture'])$('view').addEventListener(ev,e=>{pointers.delete(e.pointerId);startGesture();});
+$('view').addEventListener('wheel',e=>{e.preventDefault();const unit=e.deltaMode===1?16:e.deltaMode===2?$('view').getBoundingClientRect().height:1;zoomView(zoom*Math.exp(-e.deltaY*unit*.001),{x:e.clientX,y:e.clientY});},{passive:false});
+$('zoomIn').onclick=()=>{zoomView(zoom*1.2);};$('zoomOut').onclick=()=>{zoomView(zoom/1.2);};$('showMachine').onchange=()=>{dirty=true;};$('showFrame').onchange=()=>{dirty=true;};
+const sizeObserver=new ResizeObserver(()=>{dirty=true;drawFlat();});for(const id of ['view','cross','contactView','flat'])sizeObserver.observe($(id));
+function tick(ts){const dt=Math.min(.06,(ts-last)/1000||0);last=ts;if(playing){progress=Math.min(playStop,progress+dt*.42);$('timeline').value=progress;dirty=true;if(progress>=playStop-1e-9){playing=false;$('play').textContent='▶ Пуск'}}if(dirty){draw3D();dirty=false}requestAnimationFrame(tick)}
+window.BDC={getModel:()=>structuredClone(model),program:()=>structuredClone(programRows),diagnostics:()=>structuredClone(programIssues),actionAt:(value=progress)=>structuredClone(actionAt(value)),setModel:m=>{model=validate(structuredClone(m));fill()},getReport:()=>structuredClone(lastReport),foldSequence:()=>structuredClone(foldSequence()),foldAnglesAt,profile2D:(side,angles=foldAnglesAt(progress)[side])=>structuredClone(profile2D(model,side,angles)),cycleCount:()=>cycleCount(),bendContact:(side,angle,fold=0)=>structuredClone(bendContact(model,side,angle,fold)),anglesAt,conflicts,sweep,allowance,blankSize,wallHeight,bendRadii:()=>({inner:model.radius,outer:model.thickness,neutral:model.radius+model.thickness/2,lowerKnife:KNIFE_RADIUS,upperKnife:KNIFE_RADIUS}),loadFile,toolSetup:()=>toolSetup(model),clampAssembly:()=>structuredClone(clampAssembly(model)),tableGeometry:(active=activeAt(progress))=>structuredClone(tableGeometry(model,active)),benderGeometry:(value=progress)=>structuredClone(benderGeometry(model,value)),clampProfile:()=>structuredClone(CLAMP_PROFILE),rasterScene,getFit:()=>lastFit,partPose:(value=progress)=>structuredClone(partPose(model,value)),handlingSetup:()=>structuredClone(handlingSetup(model)),getScene:()=>lastScene?structuredClone(lastScene):null,getRasterStats:()=>lastRaster?({width:lastRaster.width,height:lastRaster.height,faces:lastRaster.faces,visibleEdges:lastRaster.visibleEdges,uniqueEdges:lastRaster.uniqueEdges,duplicateEdges:lastRaster.duplicateEdges}):null};model=validate(model);fill();requestAnimationFrame(tick);
+</script></body></html>
